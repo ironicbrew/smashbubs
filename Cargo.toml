@@ -1,0 +1,32 @@
+[package]
+name = "bevy_playground"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+# Dev with cargo run --features bevy/dynamic
+
+# Check these out
+# bevy_mod_debugdump 
+# bevycheck
+
+[dependencies]
+heron = { version = "0.11.1", features = ["2d"] }
+
+[dependencies.bevy-inspector-egui]
+version = "0.5"
+
+[dependencies.bevy]
+version = "0.5"
+default-features = false
+features = [
+  "bevy_dynamic_plugin",
+  "render",
+  "bevy_wgpu",
+  "bevy_winit",
+  "bevy_gilrs",
+  "png",
+  "hdr",
+  "x11",
+  "wayland"
+]
