@@ -36,11 +36,11 @@ fn main() {
         })
         .add_plugins(DefaultPlugins)
         .add_plugin(PhysicsPlugin::default())
+        .insert_resource(Gravity::from(Vec3::new(0.0, -100., 0.0)))
         .add_startup_system(setup.system())
         .add_startup_system(add_block.system())
         .add_system(player_movement.system())
         .add_system(player_jump.system())
-        .insert_resource(Gravity::from(Vec3::new(0.0, -9.81, 0.0))) // Optionally define gravity
         .add_plugin(HelloPlugin)
         .add_plugin(WorldInspectorPlugin::new())
         .run();
@@ -103,7 +103,7 @@ fn player_jump(
 ) {
     if keyboard_input.pressed(KeyCode::Up) {
         if let Ok((mut transform, _)) = query.single_mut() {
-            transform.translation.y += 1. * TIME_STEP;
+            transform.translation.y += 2. * TIME_STEP;
         };
     }
 }
