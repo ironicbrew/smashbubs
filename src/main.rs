@@ -4,26 +4,35 @@ use heron::prelude::*;
 
 mod player;
 use player::*;
+mod projectile;
+use projectile::*;
 
 const PLAYER_SPRITE: &str = "player.png";
 const BLOCK_SPRITE: &str = "block.png";
+const BULLET_SPRITE: &str = "bullet.png";
 const TIME_STEP: f32 = 1.;
 
-// TODO: Add collision detection (map pieces and sides of window)
-// TODO: Add Map
-// TODO: Add Jump Physics
-// TODO: Add sprite sheet that responds to player's last movement
-// TODO: Add ability to shoot projectiles
 // TODO: Add ability to control with a controller
+// TODO: Add multiple players
+// TODO: Everything disappears once it hits the side of the window
+// TODO: Bullet collision detection => {remove bullet, deal damage to target if is player}
+// TODO: Ability to say which direction a bullet shoots
+// TODO: Add side of window collision tracking reset with life minus
+// TODO: Add double jump limit with collision reset tracking
+// TODO: Add sprite sheet that responds to player's last movement
 // TODO: Add ability to have multiple players
 // TODO: Add ability to damage other players with projectiles
 // TODO: Add other weapons
 // TODO: Add haptic control to weapons
 // TODO: Ability to shoot direction depending on where pointing with controller
 // TODO: Add some indication of where projectile will go
-// TODO: Add lives system
+// TODO: Add lives left display UI
 // TODO: Add response to getting hit with projectile (damage applied, thrown back based on damage, unable to attack for a moment)
 // TODO: Decrease life and respawn if hitting side of map.
+
+
+//? Charater with ability to teleport
+//? Character with ability to create platforms (gun that creates platforms?)
 
 fn main() {
     App::build()
@@ -41,6 +50,7 @@ fn main() {
         .add_startup_system(add_block.system())
         .add_system(player_movement.system())
         .add_system(player_jump.system())
+        .add_system(add_projectile.system())
         .add_plugin(HelloPlugin)
         .add_plugin(WorldInspectorPlugin::new())
         .run();
@@ -60,24 +70,29 @@ fn add_player(
     mut materials: ResMut<Assets<ColorMaterial>>,
     asset_server: Res<AssetServer>,
 ) {
-    commands.spawn().insert_bundle(PlayerBundle {
-        name: PlayerName("Rob".to_string()),
-        damage_taken: player::DamageTaken(0),
-        _p: Player,
-        speed: Speed(1.),
-        sprite: SpriteBundle {
-            material: materials.add(asset_server.load(PLAYER_SPRITE).into()),
-            transform: Transform {
-                scale: Vec3::new(2., 2., 1.),
+    commands
+        .spawn()
+        .insert_bundle(PlayerBundle {
+            name: PlayerName("Rob".to_string()),
+            damage_taken: player::DamageTaken(0),
+            _p: Player,
+            speed: Speed(1.),
+            sprite: SpriteBundle {
+                material: materials.add(asset_server.load(PLAYER_SPRITE).into()),
+                transform: Transform {
+                    scale: Vec3::new(2., 2., 1.),
+                    ..Default::default()
+                },
                 ..Default::default()
             },
-            ..Default::default()
-        },
-    })
-    .insert(RigidBody::Dynamic)
-    .insert(CollisionShape::Cuboid { half_extends: Vec3::new(8., 8., 1.), border_radius: Some(0.) })
-    .insert(Velocity::from_linear(Vec3::Y * 0.))
-    .insert(RotationConstraints::lock());
+        })
+        .insert(RigidBody::Dynamic)
+        .insert(CollisionShape::Cuboid {
+            half_extends: Vec3::new(8., 8., 1.),
+            border_radius: Some(0.),
+        })
+        .insert(Velocity::from_linear(Vec3::Y * 0.))
+        .insert(RotationConstraints::lock());
 }
 
 fn add_block(
@@ -85,17 +100,60 @@ fn add_block(
     mut materials: ResMut<Assets<ColorMaterial>>,
     asset_server: Res<AssetServer>,
 ) {
-    commands.spawn().insert_bundle(SpriteBundle {
+    commands
+        .spawn()
+        .insert_bundle(SpriteBundle {
             material: materials.add(asset_server.load(BLOCK_SPRITE).into()),
             transform: Transform {
-                translation: Vec3::new(1.,-100.,1.),
+                translation: Vec3::new(1., -100., 1.),
                 scale: Vec3::new(24., 24., 1.),
                 ..Default::default()
             },
             ..Default::default()
         })
-    .insert(RigidBody::Static)
-    .insert(CollisionShape::Cuboid { half_extends: Vec3::new(96., 96., 1.), border_radius: Some(0.) });
+        .insert(RigidBody::Static)
+        .insert(CollisionShape::Cuboid {
+            half_extends: Vec3::new(96., 96., 1.),
+            border_radius: Some(0.),
+        });
+}
+
+fn add_projectile(
+    mut commands: Commands,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+    asset_server: Res<AssetServer>,
+    keyboard_input: Res<Input<KeyCode>>,
+    mut query: Query<(&Transform, With<Player>)>,
+) {
+    if keyboard_input.just_pressed(KeyCode::Space) {
+        if let Ok((&transform, _)) = query.single_mut() {
+            commands
+                .spawn()
+                .insert_bundle(ProjectileBundle {
+                    _p: Projectile,
+                    sprite: SpriteBundle {
+                        material: materials.add(asset_server.load(BULLET_SPRITE).into()),
+                        transform: Transform {
+                            scale: Vec3::new(2., 2., 1.),
+                            translation: Vec3::new(transform.translation.x + 2., transform.translation.y, 0.),
+                            ..Default::default()
+                        },
+                        ..Default::default()
+                    },
+                })
+                .insert(RigidBody::Dynamic)
+                .insert(CollisionShape::Cuboid {
+                    half_extends: Vec3::new(2., 2., 1.),
+                    border_radius: Some(0.),
+                })
+                .insert(PhysicMaterial {
+                    restitution: 0.1,
+                    density: 0., // Define the density. Higher value means heavier.
+                    friction: 0., // Define the friction. Higher value means higher friction.
+                })
+                .insert(Velocity::from_linear(Vec3::X * 1000.));
+        };
+    }
 }
 
 fn player_jump(
