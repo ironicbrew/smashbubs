@@ -6,6 +6,7 @@ mod player;
 use player::*;
 
 const PLAYER_SPRITE: &str = "player.png";
+const BLOCK_SPRITE: &str = "block.png";
 const TIME_STEP: f32 = 5.;
 
 // TODO: Add collision detection (map pieces and sides of window)
@@ -36,6 +37,7 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .add_plugin(PhysicsPlugin::default())
         .add_startup_system(setup.system())
+        .add_startup_system(add_block.system())
         .add_system(player_movement.system())
         .insert_resource(Gravity::from(Vec3::new(0.0, -9.81, 0.0))) // Optionally define gravity
         .add_plugin(HelloPlugin)
@@ -70,7 +72,27 @@ fn add_player(
             },
             ..Default::default()
         },
-    });
+    })
+    .insert(RigidBody::Dynamic)
+    .insert(CollisionShape::Sphere { radius: 10.0 });
+}
+
+fn add_block(
+    mut commands: Commands,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+    asset_server: Res<AssetServer>,
+) {
+    commands.spawn().insert_bundle(SpriteBundle {
+            material: materials.add(asset_server.load(BLOCK_SPRITE).into()),
+            transform: Transform {
+                translation: Vec3::new(1.,-16.,1.),
+                scale: Vec3::new(2., 2., 1.),
+                ..Default::default()
+            },
+            ..Default::default()
+        })
+    .insert(RigidBody::Static)
+    .insert(CollisionShape::Sphere { radius: 10.0 });
 }
 
 fn player_movement(
@@ -85,7 +107,7 @@ fn player_movement(
         0.
     };
 
-    if let Ok((mut transform, mut speed, _)) = query.single_mut() {
+    if let Ok((mut transform, speed, _)) = query.single_mut() {
         transform.translation.x += direction * TIME_STEP;
 
         if direction != 0. {
@@ -130,27 +152,3 @@ impl Plugin for HelloPlugin {
             .add_system(greet_people.system());
     }
 }
-
-// fn spawn(mut commands: Commands) {
-//     commands
-//         // Spawn any bundle of your choice. Only make sure there is a `GlobalTransform`
-//         .spawn_bundle(SpriteBundle::default())
-//         // Make it a rigid body
-//         .insert(RigidBody::Dynamic)
-//         // Attach a collision shape
-//         .insert(CollisionShape::Sphere { radius: 10.0 })
-//         // Optionally add other useful components...
-//         .insert(Velocity::from_linear(Vec3::X * 2.0))
-//         .insert(Acceleration::from_linear(Vec3::X * 1.0))
-//         .insert(PhysicMaterial {
-//             friction: 1.0,
-//             density: 10.0,
-//             ..Default::default()
-//         })
-//         .insert(RotationConstraints::lock())
-//         .insert(
-//             CollisionLayers::none()
-//                 .with_group(Layer::Player)
-//                 .with_mask(Layer::World),
-//         );
-// }
