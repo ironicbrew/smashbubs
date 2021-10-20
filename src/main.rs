@@ -7,7 +7,7 @@ use player::*;
 
 const PLAYER_SPRITE: &str = "player.png";
 const BLOCK_SPRITE: &str = "block.png";
-const TIME_STEP: f32 = 5.;
+const TIME_STEP: f32 = 1.;
 
 // TODO: Add collision detection (map pieces and sides of window)
 // TODO: Add Map
@@ -39,6 +39,7 @@ fn main() {
         .add_startup_system(setup.system())
         .add_startup_system(add_block.system())
         .add_system(player_movement.system())
+        .add_system(player_jump.system())
         .insert_resource(Gravity::from(Vec3::new(0.0, -9.81, 0.0))) // Optionally define gravity
         .add_plugin(HelloPlugin)
         .add_plugin(WorldInspectorPlugin::new())
@@ -74,7 +75,8 @@ fn add_player(
         },
     })
     .insert(RigidBody::Dynamic)
-    .insert(CollisionShape::Sphere { radius: 10.0 });
+    .insert(CollisionShape::Cuboid { half_extends: Vec3::new(8., 8., 1.), border_radius: Some(0.) })
+    .insert(RotationConstraints::lock());
 }
 
 fn add_block(
@@ -86,13 +88,24 @@ fn add_block(
             material: materials.add(asset_server.load(BLOCK_SPRITE).into()),
             transform: Transform {
                 translation: Vec3::new(1.,-16.,1.),
-                scale: Vec3::new(2., 2., 1.),
+                scale: Vec3::new(24., 2., 1.),
                 ..Default::default()
             },
             ..Default::default()
         })
     .insert(RigidBody::Static)
-    .insert(CollisionShape::Sphere { radius: 10.0 });
+    .insert(CollisionShape::Cuboid { half_extends: Vec3::new(96., 8., 1.), border_radius: Some(0.) });
+}
+
+fn player_jump(
+    keyboard_input: Res<Input<KeyCode>>,
+    mut query: Query<(&mut Transform, With<Player>)>,
+) {
+    if keyboard_input.pressed(KeyCode::Up) {
+        if let Ok((mut transform, _)) = query.single_mut() {
+            transform.translation.y += 1. * TIME_STEP;
+        };
+    }
 }
 
 fn player_movement(
@@ -119,7 +132,8 @@ fn player_movement(
             if speed > 0. {
                 transform.rotation = Quat::default();
             } else {
-                transform.rotation = Quat::from_rotation_y(std::f32::consts::PI);
+                // TODO: Broken due to use of physics engine influencing the rotation. Need to use different sprite instead
+                // transform.rotation = Quat::from_rotation_z(16.);
             }
         }
 
@@ -134,7 +148,7 @@ struct GreetTimer(Timer);
 fn greet_people(
     time: Res<Time>,
     mut timer: ResMut<GreetTimer>,
-    query: Query<&PlayerName, With<player::Player>>,
+    _query: Query<&PlayerName, With<player::Player>>,
 ) {
     if timer.0.tick(time.delta()).just_finished() {
         // for name in query.iter() {
