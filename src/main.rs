@@ -36,7 +36,7 @@ fn main() {
         })
         .add_plugins(DefaultPlugins)
         .add_plugin(PhysicsPlugin::default())
-        .insert_resource(Gravity::from(Vec3::new(0.0, -100., 0.0)))
+        .insert_resource(Gravity::from(Vec3::new(0.0, -1000., 0.0)))
         .add_startup_system(setup.system())
         .add_startup_system(add_block.system())
         .add_system(player_movement.system())
@@ -76,6 +76,7 @@ fn add_player(
     })
     .insert(RigidBody::Dynamic)
     .insert(CollisionShape::Cuboid { half_extends: Vec3::new(8., 8., 1.), border_radius: Some(0.) })
+    .insert(Velocity::from_linear(Vec3::Y * 0.))
     .insert(RotationConstraints::lock());
 }
 
@@ -87,23 +88,23 @@ fn add_block(
     commands.spawn().insert_bundle(SpriteBundle {
             material: materials.add(asset_server.load(BLOCK_SPRITE).into()),
             transform: Transform {
-                translation: Vec3::new(1.,-16.,1.),
-                scale: Vec3::new(24., 2., 1.),
+                translation: Vec3::new(1.,-100.,1.),
+                scale: Vec3::new(24., 24., 1.),
                 ..Default::default()
             },
             ..Default::default()
         })
     .insert(RigidBody::Static)
-    .insert(CollisionShape::Cuboid { half_extends: Vec3::new(96., 8., 1.), border_radius: Some(0.) });
+    .insert(CollisionShape::Cuboid { half_extends: Vec3::new(96., 96., 1.), border_radius: Some(0.) });
 }
 
 fn player_jump(
     keyboard_input: Res<Input<KeyCode>>,
-    mut query: Query<(&mut Transform, With<Player>)>,
+    mut query: Query<(&mut Velocity, With<Player>)>,
 ) {
-    if keyboard_input.pressed(KeyCode::Up) {
-        if let Ok((mut transform, _)) = query.single_mut() {
-            transform.translation.y += 2. * TIME_STEP;
+    if keyboard_input.just_pressed(KeyCode::Up) {
+        if let Ok((mut velocity, _)) = query.single_mut() {
+            velocity.linear = Vec3::Y * 400.;
         };
     }
 }
