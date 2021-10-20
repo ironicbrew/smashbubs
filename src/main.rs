@@ -43,10 +43,7 @@ fn main() {
         .run();
 }
 
-fn setup(
-    mut commands: Commands,
-    mut windows: ResMut<Windows>,
-) {
+fn setup(mut commands: Commands, mut windows: ResMut<Windows>) {
     // camera
     commands.spawn_bundle(OrthographicCameraBundle::new_2d());
 
@@ -64,8 +61,13 @@ fn add_player(
         name: PlayerName("Rob".to_string()),
         damage_taken: player::DamageTaken(0),
         _p: Player,
+        speed: Speed(1.),
         sprite: SpriteBundle {
             material: materials.add(asset_server.load(PLAYER_SPRITE).into()),
+            transform: Transform {
+                scale: Vec3::new(2., 2., 1.),
+                ..Default::default()
+            },
             ..Default::default()
         },
     });
@@ -73,7 +75,7 @@ fn add_player(
 
 fn player_movement(
     keyboard_input: Res<Input<KeyCode>>,
-    mut query: Query<(&mut Transform, With<Player>)>,
+    mut query: Query<(&mut Transform, &mut Speed, With<Player>)>,
 ) {
     let direction = if keyboard_input.pressed(KeyCode::Right) {
         1.
@@ -83,8 +85,25 @@ fn player_movement(
         0.
     };
 
-    if let Ok((mut transform, _)) = query.single_mut() {
+    if let Ok((mut transform, mut speed, _)) = query.single_mut() {
         transform.translation.x += direction * TIME_STEP;
+
+        if direction != 0. {
+            face_player_last_direction_moved(speed.0, transform);
+            change_player_direction(speed, direction);
+        }
+
+        fn face_player_last_direction_moved(speed: f32, mut transform: Mut<Transform>) {
+            if speed > 0. {
+                transform.rotation = Quat::default();
+            } else {
+                transform.rotation = Quat::from_rotation_y(std::f32::consts::PI);
+            }
+        }
+
+        fn change_player_direction(mut speed: Mut<Speed>, direction: f32) {
+            speed.0 = direction;
+        }
     }
 }
 
@@ -96,9 +115,9 @@ fn greet_people(
     query: Query<&PlayerName, With<player::Player>>,
 ) {
     if timer.0.tick(time.delta()).just_finished() {
-        for name in query.iter() {
-            println!("hello {}!", name.0);
-        }
+        // for name in query.iter() {
+        //     // println!("hello {}!", name.0);
+        // }
     }
 }
 
