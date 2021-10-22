@@ -2,6 +2,7 @@ use bevy::ecs::bundle::Bundle;
 use bevy::prelude::*;
 use heron::prelude::*;
 use rand::seq::SliceRandom;
+use super::gamepad::*;
 
 const PLAYER_SPRITE: &str = "player.png";
 const BAT_SPRITE: &str = "bat.png";
@@ -32,13 +33,14 @@ const AVAILABLE_PLAYER_SPRITES: [&str; 11] = [
 pub struct PlayerPlugin;
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut AppBuilder) {
-        app.add_startup_system(add_player.system());
+        app.add_system(add_player.system());
     }
 }
 
 #[derive(Bundle)]
 pub struct PlayerBundle {
     pub name: PlayerName,
+    pub gamepad: Gamepad,
     pub damage_taken: DamageTaken,
     pub speed: Speed,
     pub _p: Player,
@@ -53,23 +55,27 @@ pub struct DamageTaken(pub u32);
 
 pub struct Speed(pub f32);
 
-fn add_player(
+pub fn add_player(
     mut commands: Commands,
     mut materials: ResMut<Assets<ColorMaterial>>,
     asset_server: Res<AssetServer>,
+    mut ev_add_player: EventReader<AddPlayerEvent>,
 ) {
-    // const randomSprite: Option<&&str> = AVAILABLE_PLAYER_SPRITES.choose(&mut rand::thread_rng());
+    
 
-    let sprite: &str = if let Some(sp) = AVAILABLE_PLAYER_SPRITES.choose(&mut rand::thread_rng()) {
-        sp
+    let sprite: &str = if let Some(sprite) = AVAILABLE_PLAYER_SPRITES.choose(&mut rand::thread_rng()) {
+        sprite
     } else {
         return;
     };
 
-    commands
+    
+    for event in ev_add_player.iter() {
+        commands
         .spawn()
         .insert_bundle(PlayerBundle {
             name: PlayerName("Rob".to_string()),
+            gamepad: event.0,
             damage_taken: DamageTaken(0),
             _p: Player,
             speed: Speed(1.),
@@ -89,4 +95,7 @@ fn add_player(
         })
         .insert(Velocity::from_linear(Vec3::Y * 0.))
         .insert(RotationConstraints::lock());
+    }
+
+
 }

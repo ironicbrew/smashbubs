@@ -9,40 +9,61 @@ const BULLET_SPRITE: &str = "bullet.png";
 pub struct GamepadPlugin;
 impl Plugin for GamepadPlugin {
     fn build(&self, app: &mut AppBuilder) {
-        app.add_system(gamepad_connections.system())
+        app.add_event::<AddPlayerEvent>()
+            .add_system(gamepad_connections.system())
             .add_system(player_movement.system())
             .add_system(player_fire.system())
             .add_system(player_jump.system());
     }
 }
 
-struct MyGamepad(Gamepad);
+pub struct ConnectedGamepad(pub Gamepad);
+pub struct AddPlayerEvent(pub Gamepad);
 
 fn gamepad_connections(
     mut commands: Commands,
-    my_gamepad: Option<Res<MyGamepad>>,
     mut gamepad_evr: EventReader<GamepadEvent>,
+    mut query: Query<(Entity, &Gamepad, With<Player>)>,
+    mut ev_add_player: EventWriter<AddPlayerEvent>,
 ) {
+        
     for GamepadEvent(id, kind) in gamepad_evr.iter() {
         match kind {
             GamepadEventType::Connected => {
                 println!("New gamepad connected with ID: {:?}", id);
 
+                ev_add_player.send(AddPlayerEvent(*id));
+
                 // if we don't have any gamepad yet, use this one
-                if my_gamepad.is_none() {
-                    commands.insert_resource(MyGamepad(*id));
-                }
+                // for player in query.iter() {
+                //     if (player.)
+                // }
+                // if my_gamepad.is_none() {
+                //     if let Ok((gamepad)) = query.single_mut() {}
+                //     commands.insert_resource(MyGamepad {id: *id, playerId: query.single_mut()});
+                // } else if my_gamepad.is_some() {
+                //     commands.insert_resource(OtherGamepad(*id))
+                // }
             }
             GamepadEventType::Disconnected => {
                 println!("Lost gamepad connection with ID: {:?}", id);
 
-                // if it's the one we previously associated with the player,
-                // disassociate it:
-                if let Some(MyGamepad(old_id)) = my_gamepad.as_deref() {
-                    if old_id == id {
-                        commands.remove_resource::<MyGamepad>();
+
+                // We need to remove the player here 
+
+                for (player_entity, gamepad, _) in query.iter_mut() {
+                    if gamepad == id {
+                        commands.entity(player_entity).despawn()
                     }
-                }
+                    }
+
+
+
+                // if let Some(ConnectedGamepad(old_id)) = my_gamepad.as_deref() {
+                //     if old_id == id {
+                //         commands.remove_resource::<ConnectedGamepad>();
+                //     }
+                // }
             }
             // other events are irrelevant
             _ => {}
@@ -52,7 +73,7 @@ fn gamepad_connections(
 
 fn player_movement(
     axes: Res<Axis<GamepadAxis>>,
-    my_gamepad: Option<Res<MyGamepad>>,
+    my_gamepad: Option<Res<ConnectedGamepad>>,
     mut query: Query<(&mut Velocity, &mut Transform, &mut Speed, With<Player>)>,
 ) {
     let gamepad = if let Some(gp) = my_gamepad {
@@ -98,7 +119,7 @@ fn player_fire(
     mut materials: ResMut<Assets<ColorMaterial>>,
     asset_server: Res<AssetServer>,
     buttons: Res<Input<GamepadButton>>,
-    my_gamepad: Option<Res<MyGamepad>>,
+    my_gamepad: Option<Res<ConnectedGamepad>>,
     mut query: Query<(&mut Velocity, &mut Transform, &mut Speed, With<Player>)>,
 ) {
     let gamepad = if let Some(gp) = my_gamepad {
@@ -155,7 +176,7 @@ fn player_fire(
 
 fn player_jump(
     buttons: Res<Input<GamepadButton>>,
-    my_gamepad: Option<Res<MyGamepad>>,
+    my_gamepad: Option<Res<ConnectedGamepad>>,
     mut query: Query<(&mut Velocity, &mut Transform, &mut Speed, With<Player>)>,
 ) {
     let gamepad = if let Some(gp) = my_gamepad {

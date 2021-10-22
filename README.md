@@ -1,5 +1,6 @@
 
 // TODO: Add multiple players
+// ! Refactor to use events instead of code in the wrong place
 // TODO: Everything disappears once it hits the side of the window
 // TODO: Bullet collision detection => {remove bullet, deal damage to target if is player}
 // TODO: Add side of window collision tracking reset with life minus
