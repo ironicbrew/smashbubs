@@ -163,7 +163,6 @@ fn player_jump(
     for (mut velocity, mut available_jumps, _, _, gamepad, _) in query.iter_mut() {
         let jump_button = GamepadButton(*gamepad, GamepadButtonType::South);
         if buttons.just_pressed(jump_button) && available_jumps.0 > 0 {
-            println!("pressed");
             velocity.linear = Vec3::Y * 400.;
             available_jumps.0 = available_jumps.0 - 1;
         }
