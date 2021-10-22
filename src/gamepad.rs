@@ -94,6 +94,7 @@ fn player_movement(
 
 fn player_fire(
     mut commands: Commands,
+    axes: Res<Axis<GamepadAxis>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     asset_server: Res<AssetServer>,
     buttons: Res<Input<GamepadButton>>,
@@ -109,36 +110,45 @@ fn player_fire(
     let fire_button = GamepadButton(gamepad, GamepadButtonType::RightTrigger2);
 
     if buttons.just_pressed(fire_button) {
-        if let Ok((_, transform, _, _)) = query.single_mut() {
-            commands
-                .spawn()
-                .insert_bundle(ProjectileBundle {
-                    _p: Projectile,
-                    sprite: SpriteBundle {
-                        material: materials.add(asset_server.load(BULLET_SPRITE).into()),
-                        transform: Transform {
-                            scale: Vec3::new(2., 2., 1.),
-                            translation: Vec3::new(
-                                transform.translation.x + 2.,
-                                transform.translation.y,
-                                0.,
-                            ),
-                            ..Default::default()
-                        },
-                        ..Default::default()
-                    },
-                })
-                .insert(RigidBody::Dynamic)
-                .insert(CollisionShape::Cuboid {
-                    half_extends: Vec3::new(2., 2., 1.),
-                    border_radius: Some(0.),
-                })
-                .insert(PhysicMaterial {
-                    restitution: 0.1,
-                    density: 0.,  // Define the density. Higher value means heavier.
-                    friction: 0., // Define the friction. Higher value means higher friction.
-                })
-                .insert(Velocity::from_linear(Vec3::X * 1000.));
+        let axis_lx = GamepadAxis(gamepad, GamepadAxisType::RightStickX);
+        let axis_ly = GamepadAxis(gamepad, GamepadAxisType::RightStickY);
+
+        // TODO: Way too nested, figure out how to break out of this
+        if let (Some(x), Some(y)) = (axes.get(axis_lx), axes.get(axis_ly)) {
+            let right_stick_pos = Vec3::new(x, y, 0.);
+            if right_stick_pos.length() > 0.1 {
+                if let Ok((_, transform, _, _)) = query.single_mut() {
+                    commands
+                        .spawn()
+                        .insert_bundle(ProjectileBundle {
+                            _p: Projectile,
+                            sprite: SpriteBundle {
+                                material: materials.add(asset_server.load(BULLET_SPRITE).into()),
+                                transform: Transform {
+                                    scale: Vec3::new(2., 2., 1.),
+                                    translation: Vec3::new(
+                                        transform.translation.x + right_stick_pos.x,
+                                        transform.translation.y + right_stick_pos.y,
+                                        0.,
+                                    ),
+                                    ..Default::default()
+                                },
+                                ..Default::default()
+                            },
+                        })
+                        .insert(RigidBody::Dynamic)
+                        .insert(CollisionShape::Cuboid {
+                            half_extends: Vec3::new(2., 2., 1.),
+                            border_radius: Some(0.),
+                        })
+                        .insert(PhysicMaterial {
+                            restitution: 0.1,
+                            density: 0., // Define the density. Higher value means heavier.
+                            friction: 0., // Define the friction. Higher value means higher friction.
+                        })
+                        .insert(Velocity::from_linear(right_stick_pos * 1000.));
+                }
+            }
         }
     }
 }
