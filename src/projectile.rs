@@ -1,7 +1,5 @@
 use bevy::ecs::bundle::Bundle;
-use bevy::prelude::SpriteBundle;
-
-// TODO: This needs to be a plugin
+use bevy::prelude::*;
 
 #[derive(Bundle)]
 pub struct ProjectileBundle {
