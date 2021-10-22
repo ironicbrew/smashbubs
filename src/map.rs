@@ -9,6 +9,16 @@ impl Plugin for MapPlugin {
     }
 }
 
+#[derive(Bundle)]
+pub struct MapBundle {
+    _m: Map,
+
+    #[bundle]
+    sprite: SpriteBundle,
+}
+
+pub struct Map;
+
 fn add_block(
     mut commands: Commands,
     mut materials: ResMut<Assets<ColorMaterial>>,
@@ -16,14 +26,17 @@ fn add_block(
 ) {
     commands
         .spawn()
-        .insert_bundle(SpriteBundle {
-            material: materials.add(asset_server.load(BLOCK_SPRITE).into()),
-            transform: Transform {
-                translation: Vec3::new(1., -100., 1.),
-                scale: Vec3::new(24., 24., 1.),
+        .insert_bundle(MapBundle {
+            _m: Map,
+            sprite: SpriteBundle {
+                material: materials.add(asset_server.load(BLOCK_SPRITE).into()),
+                transform: Transform {
+                    translation: Vec3::new(1., -100., 1.),
+                    scale: Vec3::new(24., 24., 1.),
+                    ..Default::default()
+                },
                 ..Default::default()
             },
-            ..Default::default()
         })
         .insert(RigidBody::Static)
         .insert(CollisionShape::Cuboid {

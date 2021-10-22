@@ -17,7 +17,6 @@ impl Plugin for GamepadPlugin {
     }
 }
 
-pub struct ConnectedGamepad(pub Gamepad);
 pub struct AddPlayerEvent(pub Gamepad);
 
 fn gamepad_connections(
@@ -139,8 +138,8 @@ fn player_fire(
                             border_radius: Some(0.),
                         })
                         .insert(PhysicMaterial {
-                            restitution: 0.1,
-                            density: 0., // Define the density. Higher value means heavier.
+                            restitution: 0.,
+                            density: 1., // Define the density. Higher value means heavier.
                             friction: 0., // Define the friction. Higher value means higher friction.
                         })
                         .insert(Velocity::from_linear(right_stick_pos * 1000.));
@@ -154,16 +153,19 @@ fn player_jump(
     buttons: Res<Input<GamepadButton>>,
     mut query: Query<(
         &mut Velocity,
+        &mut AvailableJumps,
         &mut Transform,
         &mut Speed,
         &Gamepad,
         With<Player>,
     )>,
 ) {
-    for (mut velocity, _, _, gamepad, _) in query.iter_mut() {
+    for (mut velocity, mut available_jumps, _, _, gamepad, _) in query.iter_mut() {
         let jump_button = GamepadButton(*gamepad, GamepadButtonType::South);
-        if buttons.just_pressed(jump_button) {
+        if buttons.just_pressed(jump_button) && available_jumps.0 > 0 {
+            println!("pressed");
             velocity.linear = Vec3::Y * 400.;
+            available_jumps.0 = available_jumps.0 - 1;
         }
     }
 }
