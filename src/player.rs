@@ -7,7 +7,7 @@ const PLAYER_SPRITE: &str = "player.png";
 pub struct PlayerPlugin;
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut AppBuilder) {
-        app.add_system(add_player.system());
+        app.add_startup_system(add_player.system());
     }
 }
 
