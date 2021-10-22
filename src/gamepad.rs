@@ -3,7 +3,7 @@ use super::projectile::*;
 use bevy::prelude::*;
 use heron::prelude::*;
 
-pub const TIME_STEP: f32 = 1.;
+pub const TIME_STEP: f32 = 3.;
 const BULLET_SPRITE: &str = "bullet.png";
 
 pub struct GamepadPlugin;
@@ -58,7 +58,7 @@ fn player_movement(
         With<Player>,
     )>,
 ) {
-    for (_, mut transform, speed, gamepad, _) in query.iter_mut() {
+    for (mut velocity, mut transform, speed, gamepad, _) in query.iter_mut() {
         let axis_lx = GamepadAxis(*gamepad, GamepadAxisType::LeftStickX);
 
         let x = if let Some(x) = axes.get(axis_lx) {

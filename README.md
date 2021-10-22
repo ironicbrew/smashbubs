@@ -1,5 +1,4 @@
 
-// TODO: Improved map
 // TODO: Add sprite sheet that responds to player's last movement
 
 // Polish
