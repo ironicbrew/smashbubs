@@ -5,7 +5,7 @@ const BLOCK_SPRITE: &str = "block.png";
 pub struct MapPlugin;
 impl Plugin for MapPlugin {
     fn build(&self, app: &mut AppBuilder) {
-        app.add_system(add_block.system());
+        app.add_startup_system(add_block.system());
     }
 }
 
