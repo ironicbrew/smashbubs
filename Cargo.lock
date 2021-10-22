@@ -484,6 +484,7 @@ dependencies = [
  "bevy",
  "bevy-inspector-egui",
  "heron",
+ "rand",
 ]
 
 [[package]]

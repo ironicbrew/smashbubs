@@ -2,7 +2,6 @@
 // TODO: Add multiple players
 // TODO: Everything disappears once it hits the side of the window
 // TODO: Bullet collision detection => {remove bullet, deal damage to target if is player}
-// TODO: Ability to say which direction a bullet shoots
 // TODO: Add side of window collision tracking reset with life minus
 // TODO: Add double jump limit with collision reset tracking
 // TODO: Add sprite sheet that responds to player's last movement
