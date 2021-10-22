@@ -26,44 +26,22 @@ fn gamepad_connections(
     mut query: Query<(Entity, &Gamepad, With<Player>)>,
     mut ev_add_player: EventWriter<AddPlayerEvent>,
 ) {
-        
     for GamepadEvent(id, kind) in gamepad_evr.iter() {
         match kind {
             GamepadEventType::Connected => {
                 println!("New gamepad connected with ID: {:?}", id);
 
                 ev_add_player.send(AddPlayerEvent(*id));
-
-                // if we don't have any gamepad yet, use this one
-                // for player in query.iter() {
-                //     if (player.)
-                // }
-                // if my_gamepad.is_none() {
-                //     if let Ok((gamepad)) = query.single_mut() {}
-                //     commands.insert_resource(MyGamepad {id: *id, playerId: query.single_mut()});
-                // } else if my_gamepad.is_some() {
-                //     commands.insert_resource(OtherGamepad(*id))
-                // }
             }
             GamepadEventType::Disconnected => {
                 println!("Lost gamepad connection with ID: {:?}", id);
 
-
-                // We need to remove the player here 
-
+                // Despawn player associated with this gamepad
                 for (player_entity, gamepad, _) in query.iter_mut() {
                     if gamepad == id {
                         commands.entity(player_entity).despawn()
                     }
-                    }
-
-
-
-                // if let Some(ConnectedGamepad(old_id)) = my_gamepad.as_deref() {
-                //     if old_id == id {
-                //         commands.remove_resource::<ConnectedGamepad>();
-                //     }
-                // }
+                }
             }
             // other events are irrelevant
             _ => {}
@@ -73,24 +51,23 @@ fn gamepad_connections(
 
 fn player_movement(
     axes: Res<Axis<GamepadAxis>>,
-    my_gamepad: Option<Res<ConnectedGamepad>>,
-    mut query: Query<(&mut Velocity, &mut Transform, &mut Speed, With<Player>)>,
+    mut query: Query<(
+        &mut Velocity,
+        &mut Transform,
+        &mut Speed,
+        &Gamepad,
+        With<Player>,
+    )>,
 ) {
-    let gamepad = if let Some(gp) = my_gamepad {
-        gp.0
-    } else {
-        return;
-    };
+    for (_, mut transform, speed, gamepad, _) in query.iter_mut() {
+        let axis_lx = GamepadAxis(*gamepad, GamepadAxisType::LeftStickX);
 
-    let axis_lx = GamepadAxis(gamepad, GamepadAxisType::LeftStickX);
+        let x = if let Some(x) = axes.get(axis_lx) {
+            x
+        } else {
+            return;
+        };
 
-    let x = if let Some(x) = axes.get(axis_lx) {
-        x
-    } else {
-        return;
-    };
-
-    if let Ok((_, mut transform, speed, _)) = query.single_mut() {
         transform.translation.x += x * TIME_STEP;
 
         if x != 0. {
@@ -119,26 +96,25 @@ fn player_fire(
     mut materials: ResMut<Assets<ColorMaterial>>,
     asset_server: Res<AssetServer>,
     buttons: Res<Input<GamepadButton>>,
-    my_gamepad: Option<Res<ConnectedGamepad>>,
-    mut query: Query<(&mut Velocity, &mut Transform, &mut Speed, With<Player>)>,
+    mut query: Query<(
+        &mut Velocity,
+        &mut Transform,
+        &mut Speed,
+        &Gamepad,
+        With<Player>,
+    )>,
 ) {
-    let gamepad = if let Some(gp) = my_gamepad {
-        gp.0
-    } else {
-        return;
-    };
+    // TODO: Way too nested, figure out how to break out of this
+    for (_, transform, _, gamepad, _) in query.iter_mut() {
+        let fire_button = GamepadButton(*gamepad, GamepadButtonType::RightTrigger2);
 
-    let fire_button = GamepadButton(gamepad, GamepadButtonType::RightTrigger2);
+        if buttons.just_pressed(fire_button) {
+            let axis_lx = GamepadAxis(*gamepad, GamepadAxisType::RightStickX);
+            let axis_ly = GamepadAxis(*gamepad, GamepadAxisType::RightStickY);
 
-    if buttons.just_pressed(fire_button) {
-        let axis_lx = GamepadAxis(gamepad, GamepadAxisType::RightStickX);
-        let axis_ly = GamepadAxis(gamepad, GamepadAxisType::RightStickY);
-
-        // TODO: Way too nested, figure out how to break out of this
-        if let (Some(x), Some(y)) = (axes.get(axis_lx), axes.get(axis_ly)) {
-            let right_stick_pos = Vec3::new(x, y, 0.);
-            if right_stick_pos.length() > 0.1 {
-                if let Ok((_, transform, _, _)) = query.single_mut() {
+            if let (Some(x), Some(y)) = (axes.get(axis_lx), axes.get(axis_ly)) {
+                let right_stick_pos = Vec3::new(x, y, 0.);
+                if right_stick_pos.length() > 0.1 {
                     commands
                         .spawn()
                         .insert_bundle(ProjectileBundle {
@@ -176,21 +152,18 @@ fn player_fire(
 
 fn player_jump(
     buttons: Res<Input<GamepadButton>>,
-    my_gamepad: Option<Res<ConnectedGamepad>>,
-    mut query: Query<(&mut Velocity, &mut Transform, &mut Speed, With<Player>)>,
+    mut query: Query<(
+        &mut Velocity,
+        &mut Transform,
+        &mut Speed,
+        &Gamepad,
+        With<Player>,
+    )>,
 ) {
-    let gamepad = if let Some(gp) = my_gamepad {
-        gp.0
-    } else {
-        return;
-    };
-
-    let jump_button = GamepadButton(gamepad, GamepadButtonType::South);
-
-    if buttons.just_pressed(jump_button) {
-        // Jump
-        if let Ok((mut velocity, _, _, _)) = query.single_mut() {
+    for (mut velocity, _, _, gamepad, _) in query.iter_mut() {
+        let jump_button = GamepadButton(*gamepad, GamepadButtonType::South);
+        if buttons.just_pressed(jump_button) {
             velocity.linear = Vec3::Y * 400.;
-        };
+        }
     }
 }
