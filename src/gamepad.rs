@@ -51,14 +51,14 @@ fn gamepad_connections(
 fn player_movement(
     axes: Res<Axis<GamepadAxis>>,
     mut query: Query<(
-        &mut Velocity,
+        &mut TextureAtlasSprite,
         &mut Transform,
         &mut Speed,
         &Gamepad,
         With<Player>,
     )>,
 ) {
-    for (mut velocity, mut transform, speed, gamepad, _) in query.iter_mut() {
+    for (mut sprite, mut transform, speed, gamepad, _) in query.iter_mut() {
         let axis_lx = GamepadAxis(*gamepad, GamepadAxisType::LeftStickX);
 
         let x = if let Some(x) = axes.get(axis_lx) {
@@ -70,16 +70,15 @@ fn player_movement(
         transform.translation.x += x * TIME_STEP;
 
         if x != 0. {
-            face_player_last_direction_moved(speed.0, transform);
+            face_player_last_direction_moved(sprite, speed.0, transform);
             change_player_direction(speed, x);
         }
 
-        fn face_player_last_direction_moved(speed: f32, mut transform: Mut<Transform>) {
+        fn face_player_last_direction_moved(mut sprite: Mut<TextureAtlasSprite>, speed: f32, mut transform: Mut<Transform>) {
             if speed > 0. {
-                transform.rotation = Quat::default();
+                sprite.index = 0;
             } else {
-                // ! Broken due to use of physics engine influencing the rotation. Need to use different sprite instead
-                // transform.rotation = Quat::from_rotation_z(16.);
+                sprite.index = 1;
             }
         }
 
@@ -103,7 +102,7 @@ fn player_fire(
         With<Player>,
     )>,
 ) {
-    // TODO: Way too nested, figure out how to break out of this
+    // TODO: Way too nested, figure out how to break out of this (closure in rust?)
     for (_, transform, _, gamepad, _) in query.iter_mut() {
         let fire_button = GamepadButton(*gamepad, GamepadButtonType::RightTrigger2);
 

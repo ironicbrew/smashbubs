@@ -57,16 +57,16 @@ fn projectile_hit_player(
 
                 match collision {
                     Collision::Top => {
-                        velocity.linear = Vec3::Y * -(damage_taken.0 * 10.);
+                        velocity.linear = Vec3::Y * -(damage_taken.0 * damage_taken.0);
                     },
                     Collision::Bottom => {
-                        velocity.linear = Vec3::Y * damage_taken.0 * 10.;
+                        velocity.linear = Vec3::Y * damage_taken.0 * damage_taken.0;
                     },
                     Collision::Left => {
-                        velocity.linear = Vec3::X * damage_taken.0 * 10.;
+                        velocity.linear = Vec3::X * damage_taken.0 * damage_taken.0;
                     },
                     Collision::Right => {
-                        velocity.linear = Vec3::X * -(damage_taken.0 * 10.);
+                        velocity.linear = Vec3::X * -(damage_taken.0 * damage_taken.0);
                     }  
                     
                 }

@@ -1,13 +1,15 @@
 // Next steps
-// TODO: Add sprite sheet that responds to player's last movement
+// TODO: Flip sprite sheet on player movement
 // ! Refactor to use events instead of code in the wrong place
+// TODO: Stop bug of spawning off the map
+// TODO: Bug - sprites don't load sometimes
 // TODO: You should not be able to spawn as a player that already exists on map
-// TODO: Add lives left display UI
-// TODO: Add some indication of where projectile will go
+// TODO: Add lives left + damage ui
 // TODO: Add other weapons with ammo
 
 // Expermentation:
 
 // TODO: Add haptic control to weapons
-//? Charater with ability to teleport
-//? Character with ability to create platforms (gun that creates platforms?)
+// TODO: Add special abilities to characters
+
+

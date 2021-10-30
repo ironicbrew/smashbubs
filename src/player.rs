@@ -4,38 +4,39 @@ use bevy::ecs::bundle::Bundle;
 use bevy::prelude::*;
 use bevy::sprite::collide_aabb::collide;
 use heron::prelude::*;
-use rand::seq::SliceRandom;
+// use rand::seq::SliceRandom;
 
-const PLAYER_SPRITE: &str = "player.png";
-const BAT_SPRITE: &str = "bat.png";
-const BLOCKY_SPRITE: &str = "blocky.png";
-const BLUE_RING_SPRITE: &str = "blue_ring.png";
-const CRABTOPUS_SPRITE: &str = "crabtopus.png";
-const IRON_SPRITE: &str = "iron.png";
-const PERL_SPRITE: &str = "perl.png";
+// const PLAYER_SPRITE: &str = "player.png";
+// const BAT_SPRITE: &str = "bat.png";
+// const BLOCKY_SPRITE: &str = "blocky.png";
+// const BLUE_RING_SPRITE: &str = "blue_ring.png";
+// const CRABTOPUS_SPRITE: &str = "crabtopus.png";
+// const IRON_SPRITE: &str = "iron.png";
+// const PERL_SPRITE: &str = "perl.png";
 const PIG_SPRITE: &str = "pig.png";
-const RAT_SPRITE: &str = "rat.png";
-const SLUG_SPRITE: &str = "slug.png";
-const TURTLE_SPRITE: &str = "turtle.png";
+// const RAT_SPRITE: &str = "rat.png";
+// const SLUG_SPRITE: &str = "slug.png";
+// const TURTLE_SPRITE: &str = "turtle.png";
 
-const AVAILABLE_PLAYER_SPRITES: [&str; 11] = [
-    PLAYER_SPRITE,
-    BAT_SPRITE,
-    BLOCKY_SPRITE,
-    BLUE_RING_SPRITE,
-    CRABTOPUS_SPRITE,
-    IRON_SPRITE,
-    PERL_SPRITE,
-    PIG_SPRITE,
-    RAT_SPRITE,
-    SLUG_SPRITE,
-    TURTLE_SPRITE,
-];
+// const AVAILABLE_PLAYER_SPRITES: [&str; 11] = [
+//     PLAYER_SPRITE,
+//     BAT_SPRITE,
+//     BLOCKY_SPRITE,
+//     BLUE_RING_SPRITE,
+//     CRABTOPUS_SPRITE,
+//     IRON_SPRITE,
+//     PERL_SPRITE,
+//     PIG_SPRITE,
+//     RAT_SPRITE,
+//     SLUG_SPRITE,
+//     TURTLE_SPRITE,
+// ];
 
 pub struct PlayerPlugin;
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut AppBuilder) {
-        app.add_system(add_player.system())
+        app.add_startup_system(setup_sprites.system())
+        .add_system(add_player.system())
             .add_system(respawn_players_who_leave_window.system())
             .add_system(reset_jumps.system());
     }
@@ -52,7 +53,7 @@ pub struct PlayerBundle {
     pub _p: Player,
 
     #[bundle]
-    pub sprite: SpriteBundle,
+    pub sprite: SpriteSheetBundle,
 }
 
 pub struct Player;
@@ -63,18 +64,28 @@ pub struct AvailableJumps(pub i8);
 
 pub struct Speed(pub f32);
 
+pub struct PlayerMaterials {
+	player: Handle<TextureAtlas>,
+}
+
+pub fn setup_sprites(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut texture_atlases: ResMut<Assets<TextureAtlas>>,
+) {
+    let player_texture_handle = asset_server.load(PIG_SPRITE);
+	let player_texture_atlas = TextureAtlas::from_grid(player_texture_handle, Vec2::new(8.0, 8.0), 2, 1);
+    commands.insert_resource(PlayerMaterials {
+        player: texture_atlases.add(player_texture_atlas),
+	});
+
+}
+
 pub fn add_player(
     mut commands: Commands,
-    mut materials: ResMut<Assets<ColorMaterial>>,
-    asset_server: Res<AssetServer>,
     mut ev_add_player: EventReader<AddPlayerEvent>,
+    player_materials: Res<PlayerMaterials>
 ) {
-    let sprite: &str =
-        if let Some(sprite) = AVAILABLE_PLAYER_SPRITES.choose(&mut rand::thread_rng()) {
-            sprite
-        } else {
-            return;
-        };
 
     for event in ev_add_player.iter() {
         commands
@@ -87,8 +98,9 @@ pub fn add_player(
                 lives: Lives(2),
                 _p: Player,
                 speed: Speed(1.),
-                sprite: SpriteBundle {
-                    material: materials.add(asset_server.load(sprite).into()),
+                sprite: SpriteSheetBundle {
+                    // material: materials.add(asset_server.load(sprite).into()),
+                    texture_atlas: player_materials.player.clone(),
                     transform: Transform {
                         scale: Vec3::new(2., 2., 1.),
                         ..Default::default()
