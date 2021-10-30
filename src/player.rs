@@ -44,13 +44,11 @@ impl Plugin for PlayerPlugin {
 
 #[derive(Bundle)]
 pub struct PlayerBundle {
-    pub name: PlayerName,
     pub gamepad: Gamepad,
     pub available_jumps: AvailableJumps,
     pub lives: Lives,
     pub damage_taken: DamageTaken,
     pub speed: Speed,
-    pub size: Vec2,
     pub _p: Player,
 
     #[bundle]
@@ -60,8 +58,30 @@ pub struct PlayerBundle {
     pub velocity: Velocity,
     pub rotation_constraints: RotationConstraints,
 }
+
+impl Default for PlayerBundle {
+    fn default() -> PlayerBundle {
+        PlayerBundle {
+            gamepad: Gamepad(1),
+            damage_taken: DamageTaken(0.),
+            available_jumps: AvailableJumps(2),
+            lives: Lives(2),
+            _p: Player,
+            speed: Speed(1.),
+            sprite: SpriteSheetBundle {
+                ..Default::default()
+            },
+            body: RigidBody::Dynamic,
+            shape: CollisionShape::Cuboid {
+                half_extends: Vec3::new(8., 8., 1.),
+                border_radius: Some(0.),
+            },
+            velocity: Velocity::from_linear(Vec3::Y * 100.),
+            rotation_constraints: RotationConstraints::lock()
+        }
+    }
+}
 pub struct Player;
-pub struct PlayerName(pub String);
 pub struct DamageTaken(pub f32);
 pub struct Lives(pub i8);
 pub struct AvailableJumps(pub i8);
@@ -96,14 +116,7 @@ pub fn add_player(
         commands
             .spawn()
             .insert_bundle(PlayerBundle {
-                name: PlayerName("Rob".to_string()),
                 gamepad: event.0,
-                damage_taken: DamageTaken(0.),
-                available_jumps: AvailableJumps(2),
-                lives: Lives(2),
-                _p: Player,
-                size: Vec2::new(8., 8.),
-                speed: Speed(1.),
                 sprite: SpriteSheetBundle {
                     // material: materials.add(asset_server.load(sprite).into()),
                     texture_atlas: player_materials.player.clone(),
@@ -114,13 +127,7 @@ pub fn add_player(
                     },
                     ..Default::default()
                 },
-                body: RigidBody::Dynamic,
-                shape: CollisionShape::Cuboid {
-                    half_extends: Vec3::new(8., 8., 1.),
-                    border_radius: Some(0.),
-                },
-                velocity: Velocity::from_linear(Vec3::Y * 100.),
-                rotation_constraints: RotationConstraints::lock()
+                ..Default::default()
             });
     }
 }
