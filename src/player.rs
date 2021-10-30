@@ -108,6 +108,7 @@ pub fn add_player(
                     // material: materials.add(asset_server.load(sprite).into()),
                     texture_atlas: player_materials.player.clone(),
                     transform: Transform {
+                        translation: Vec3::new(0., 0., 1.),
                         scale: Vec3::new(2., 2., 1.),
                         ..Default::default()
                     },
@@ -118,7 +119,7 @@ pub fn add_player(
                     half_extends: Vec3::new(8., 8., 1.),
                     border_radius: Some(0.),
                 },
-                velocity: Velocity::from_linear(Vec3::Y * 1.),
+                velocity: Velocity::from_linear(Vec3::Y * 100.),
                 rotation_constraints: RotationConstraints::lock()
             });
     }
@@ -147,7 +148,7 @@ fn respawn_players_who_leave_window(
                 commands.entity(player_entity).despawn();
             } else {
                 transform.translation = Vec3::new(0., 0., 1.);
-                velocity.linear = Vec3::Y * 1.;
+                velocity.linear = Vec3::Y * 100.;
             }
         }
     }

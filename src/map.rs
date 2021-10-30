@@ -33,7 +33,7 @@ fn add_block(
                 material: materials.add(asset_server.load(BLOCK_SPRITE).into()),
                 transform: Transform {
                     translation: Vec3::new(1., -100., 1.),
-                    scale: Vec3::new(50., 1., 1.),
+                    scale: Vec3::new(50., 2., 1.),
                     ..Default::default()
                 },
                 ..Default::default()
@@ -41,8 +41,13 @@ fn add_block(
         })
         .insert(RigidBody::Static)
         .insert(CollisionShape::Cuboid {
-            half_extends: Vec3::new(192., 4., 1.),
+            half_extends: Vec3::new(192., 8., 1.),
             border_radius: Some(0.),
+        })
+        .insert(PhysicMaterial {
+            restitution: 0.2,
+            density: 1.,
+            friction: 1.,
         });
 
     // Left Platform
@@ -54,7 +59,7 @@ fn add_block(
                 material: materials.add(asset_server.load(BLOCK_SPRITE).into()),
                 transform: Transform {
                     translation: Vec3::new(-110., 0., 1.),
-                    scale: Vec3::new(16., 1., 1.),
+                    scale: Vec3::new(16., 2., 1.),
                     ..Default::default()
                 },
                 ..Default::default()
@@ -62,7 +67,7 @@ fn add_block(
         })
         .insert(RigidBody::Static)
         .insert(CollisionShape::Cuboid {
-            half_extends: Vec3::new(60., 4., 1.),
+            half_extends: Vec3::new(64., 8., 1.),
             border_radius: Some(0.),
         });
 
@@ -75,7 +80,7 @@ fn add_block(
                 material: materials.add(asset_server.load(BLOCK_SPRITE).into()),
                 transform: Transform {
                     translation: Vec3::new(110., 0., 1.),
-                    scale: Vec3::new(16., 1., 1.),
+                    scale: Vec3::new(16., 2., 1.),
                     ..Default::default()
                 },
                 ..Default::default()
@@ -83,7 +88,7 @@ fn add_block(
         })
         .insert(RigidBody::Static)
         .insert(CollisionShape::Cuboid {
-            half_extends: Vec3::new(60., 4., 1.),
+            half_extends: Vec3::new(64., 8., 1.),
             border_radius: Some(0.),
         });
 
@@ -96,7 +101,7 @@ fn add_block(
                 material: materials.add(asset_server.load(BLOCK_SPRITE).into()),
                 transform: Transform {
                     translation: Vec3::new(0., 100., 1.),
-                    scale: Vec3::new(16., 1., 1.),
+                    scale: Vec3::new(16., 2., 1.),
                     ..Default::default()
                 },
                 ..Default::default()
@@ -104,7 +109,7 @@ fn add_block(
         })
         .insert(RigidBody::Static)
         .insert(CollisionShape::Cuboid {
-            half_extends: Vec3::new(60., 4., 1.),
+            half_extends: Vec3::new(64., 8., 1.),
             border_radius: Some(0.),
         });
 }
