@@ -1,9 +1,8 @@
 // Next steps
-// ! PlayerBundle should use defaults
 // ! Refactor to use events instead of code in the wrong place
-// TODO: You should not be able to spawn as a player that already exists on map
 // TODO: Add lives left + damage ui
 // TODO: Add other weapons with ammo
+// TODO: Add start game mode UI (4 players with ability to select character from list. Start button starts game with selected players)
 
 // Expermentation:
 
