@@ -50,17 +50,22 @@ pub struct PlayerBundle {
     pub lives: Lives,
     pub damage_taken: DamageTaken,
     pub speed: Speed,
+    pub size: Vec2,
     pub _p: Player,
 
     #[bundle]
     pub sprite: SpriteSheetBundle,
+    pub body: RigidBody,
+    pub shape: CollisionShape,
+    pub velocity: Velocity,
+    pub rotation_constraints: RotationConstraints,
 }
-
 pub struct Player;
 pub struct PlayerName(pub String);
 pub struct DamageTaken(pub f32);
 pub struct Lives(pub i8);
 pub struct AvailableJumps(pub i8);
+pub struct Size(Vec2);
 
 pub struct Speed(pub f32);
 
@@ -97,6 +102,7 @@ pub fn add_player(
                 available_jumps: AvailableJumps(2),
                 lives: Lives(2),
                 _p: Player,
+                size: Vec2::new(8., 8.),
                 speed: Speed(1.),
                 sprite: SpriteSheetBundle {
                     // material: materials.add(asset_server.load(sprite).into()),
@@ -107,14 +113,14 @@ pub fn add_player(
                     },
                     ..Default::default()
                 },
-            })
-            .insert(RigidBody::Dynamic)
-            .insert(CollisionShape::Cuboid {
-                half_extends: Vec3::new(8., 8., 1.),
-                border_radius: Some(0.),
-            })
-            .insert(Velocity::from_linear(Vec3::Y * 0.))
-            .insert(RotationConstraints::lock());
+                body: RigidBody::Dynamic,
+                shape: CollisionShape::Cuboid {
+                    half_extends: Vec3::new(8., 8., 1.),
+                    border_radius: Some(0.),
+                },
+                velocity: Velocity::from_linear(Vec3::Y * 1.),
+                rotation_constraints: RotationConstraints::lock()
+            });
     }
 }
 
@@ -126,10 +132,11 @@ fn respawn_players_who_leave_window(
         &mut Transform,
         &mut Lives,
         &mut DamageTaken,
+        &mut Velocity,
         With<Player>,
     )>,
 ) {
-    for (player_entity, mut transform, mut lives, mut damage_taken, _) in query.iter_mut() {
+    for (player_entity, mut transform, mut lives, mut damage_taken, mut velocity, _) in query.iter_mut() {
         if transform.translation.y.abs() > window.height / 2.
             || transform.translation.x.abs() > window.width / 2.
         {
@@ -139,28 +146,26 @@ fn respawn_players_who_leave_window(
             if lives.0 == 0 {
                 commands.entity(player_entity).despawn();
             } else {
-                transform.translation = Vec3::new(0., 0., 0.);
+                transform.translation = Vec3::new(0., 0., 1.);
+                velocity.linear = Vec3::Y * 1.;
             }
         }
     }
 }
 
-fn reset_jumps(
-    mut player_query: Query<(&Transform, &Sprite, &mut AvailableJumps, With<Player>)>,
-    mut map_query: Query<(&Transform, &Sprite, With<Map>)>,
+fn reset_jumps(mut events: EventReader<CollisionEvent>,
+    mut player_query: Query<(Entity, &mut AvailableJumps, With<Player>)>
 ) {
-    for (player_transform, player_sprite, mut available_jumps, _) in player_query.iter_mut() {
-        for (map_transform, map_sprite, _) in map_query.iter_mut() {
-            let collision = collide(
-                player_transform.translation,
-                player_sprite.size * Vec2::from(player_transform.scale),
-                map_transform.translation,
-                map_sprite.size * Vec2::from(map_transform.scale),
-            );
-
-            if let Some(_) = collision {
-                available_jumps.0 = 2;
+    for event in events.iter() {
+        match event {
+            CollisionEvent::Started(collider1, collider2) => {
+                for (player_entity, mut available_jumps, _) in player_query.iter_mut() {
+                    if player_entity == collider1.rigid_body_entity() || player_entity == collider2.rigid_body_entity() {
+                        available_jumps.0 = 2;
+                    }
+                }
             }
+            CollisionEvent::Stopped(_, _) => {}
         }
     }
 }
