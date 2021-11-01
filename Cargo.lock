@@ -378,19 +378,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bevy_gilrs"
-version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3b28a12e991a63fe044605aacf806b8dcdc5aa3af2d4482ba6cb9a1b74fc9392"
-dependencies = [
- "bevy_app",
- "bevy_ecs",
- "bevy_input",
- "bevy_utils",
- "gilrs",
-]
-
-[[package]]
 name = "bevy_input"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -415,7 +402,6 @@ dependencies = [
  "bevy_diagnostic",
  "bevy_dynamic_plugin",
  "bevy_ecs",
- "bevy_gilrs",
  "bevy_input",
  "bevy_log",
  "bevy_math",
@@ -483,7 +469,9 @@ version = "0.1.0"
 dependencies = [
  "bevy",
  "bevy-inspector-egui",
+ "gilrs",
  "heron",
+ "log",
  "rand",
 ]
 

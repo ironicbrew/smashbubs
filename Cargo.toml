@@ -13,6 +13,8 @@ edition = "2021"
 [dependencies]
 heron = { version = "0.11.1", features = ["2d"] }
 rand = "*"
+gilrs = "0.8.1"
+log = "0.4"
 
 [dependencies.bevy-inspector-egui]
 version = "0.5"
@@ -25,7 +27,6 @@ features = [
   "render",
   "bevy_wgpu",
   "bevy_winit",
-  "bevy_gilrs",
   "png",
   "hdr",
   "x11",

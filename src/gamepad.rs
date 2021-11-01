@@ -1,7 +1,13 @@
+use gilrs::ff::Effect;
+use std::time::Duration;
+use gilrs::GamepadId;
+use gilrs::Gilrs;
 use super::player::*;
 use super::projectile::*;
 use bevy::prelude::*;
 use heron::prelude::*;
+use gilrs::ff::{BaseEffect, BaseEffectType, EffectBuilder, Replay, Ticks};
+use std::thread;
 
 pub const TIME_STEP: f32 = 3.;
 const BULLET_SPRITE: &str = "bullet.png";
@@ -10,14 +16,17 @@ pub struct GamepadPlugin;
 impl Plugin for GamepadPlugin {
     fn build(&self, app: &mut AppBuilder) {
         app.add_event::<AddPlayerEvent>()
+            .insert_resource(RumbleTimer(Timer::from_seconds(0., false)))
             .add_system(gamepad_connections.system())
             .add_system(player_movement.system())
             .add_system(player_fire.system())
-            .add_system(player_jump.system());
+            .add_system(player_jump.system())
+            .add_system(stop_rumbler.system());
     }
 }
 
 pub struct AddPlayerEvent(pub Gamepad);
+pub struct RumbleTimer(Timer);
 
 fn gamepad_connections(
     mut commands: Commands,
@@ -28,13 +37,9 @@ fn gamepad_connections(
     for GamepadEvent(id, kind) in gamepad_evr.iter() {
         match kind {
             GamepadEventType::Connected => {
-                println!("New gamepad connected with ID: {:?}", id);
-
                 ev_add_player.send(AddPlayerEvent(*id));
             }
             GamepadEventType::Disconnected => {
-                println!("Lost gamepad connection with ID: {:?}", id);
-
                 // Despawn player associated with this gamepad
                 for (player_entity, gamepad, _) in query.iter_mut() {
                     if gamepad == id {
@@ -74,7 +79,11 @@ fn player_movement(
             change_player_direction(speed, x);
         }
 
-        fn face_player_last_direction_moved(mut sprite: Mut<TextureAtlasSprite>, speed: f32, mut transform: Mut<Transform>) {
+        fn face_player_last_direction_moved(
+            mut sprite: Mut<TextureAtlasSprite>,
+            speed: f32,
+            mut transform: Mut<Transform>,
+        ) {
             if speed > 0. {
                 sprite.index = 0;
             } else {
@@ -88,11 +97,44 @@ fn player_movement(
     }
 }
 
+pub fn rumble(gamepad_ids: &[GamepadId]) {
+    let mut gilrs = Gilrs::new().unwrap();
+
+    let duration = Ticks::from_ms(1000);
+    let effect = EffectBuilder::new()
+    .add_effect(BaseEffect {
+        kind: BaseEffectType::Strong { magnitude: 60_000 },
+        scheduling: Replay {
+            play_for: duration,
+            ..Default::default()
+        },
+        envelope: Default::default(),
+    })
+    .gamepads(gamepad_ids)
+    .finish(&mut gilrs)
+    .unwrap();
+    effect.play().unwrap();
+    println!("rumbling over");
+    thread::sleep(Duration::from_secs(1));
+    effect.stop().unwrap();
+}
+
+fn stop_rumbler(mut rumble_timer: ResMut<RumbleTimer>, time: Res<Time>, mut rumble: NonSendMut<Effect>) {
+
+    if rumble_timer.0.tick(time.delta()).just_finished() {
+        rumble.stop().unwrap();
+    }
+
+}
+
 fn player_fire(
     mut commands: Commands,
+    mut gilrs: NonSendMut<Gilrs>,
+    mut rumble: NonSendMut<Effect>,
     axes: Res<Axis<GamepadAxis>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     asset_server: Res<AssetServer>,
+    time: Res<Time>,
     buttons: Res<Input<GamepadButton>>,
     mut query: Query<(
         &mut Velocity,
@@ -102,6 +144,7 @@ fn player_fire(
         With<Player>,
     )>,
 ) {
+
     // TODO: Way too nested, figure out how to break out of this (closure in rust?)
     for (_, transform, _, gamepad, _) in query.iter_mut() {
         let fire_button = GamepadButton(*gamepad, GamepadButtonType::RightTrigger2);
@@ -109,6 +152,43 @@ fn player_fire(
         if buttons.just_pressed(fire_button) {
             let axis_lx = GamepadAxis(*gamepad, GamepadAxisType::RightStickX);
             let axis_ly = GamepadAxis(*gamepad, GamepadAxisType::RightStickY);
+
+
+            // let mut gilrs = Gilrs::new().unwrap();
+
+            // let mut gamepads = Vec::new();
+
+            // for (_id, gamepad) in gilrs.gamepads() {
+            //     gamepads.push(_id);
+            // }
+
+            let test: Vec<GamepadId> = gilrs.gamepads().map(|(_id, _)| _id).collect();
+
+            rumble.play().unwrap();
+
+            let rumble_timer = RumbleTimer(Timer::from_seconds(0.2, false));
+
+            commands.insert_resource(rumble_timer);
+
+
+            //         let effect = EffectBuilder::new()
+            //         .add_effect(BaseEffect {
+            //             kind: BaseEffectType::Strong { magnitude: 60_000 },
+            //             scheduling: Replay {
+            //                 play_for: Ticks::from_ms(200),
+            //                 ..Default::default()
+            //             },
+            //             envelope: Default::default(),
+            //         })
+            //         .gamepads(&[])
+            //         .finish(&mut gilrs)
+            //         .unwrap();
+            //         effect.play().unwrap();
+
+
+                    
+                    // thread::sleep(Duration::from_millis(100));
+                    // effect.stop().unwrap();
 
             if let (Some(x), Some(y)) = (axes.get(axis_lx), axes.get(axis_ly)) {
                 let right_stick_pos = Vec3::new(x, y, 0.);
