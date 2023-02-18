@@ -17,7 +17,7 @@ impl Plugin for PlayerPlugin {
 #[derive(Component)]
 pub struct Player;
 #[derive(Component)]
-pub struct Speed(u32);
+pub struct Speed(pub f32);
 
 #[derive(Resource)]
 pub struct PlayerMaterials {
@@ -63,7 +63,7 @@ fn add_player(
             available_jumps: AvailableJumps(2),
             lives: Lives(3),
             damage_taken: DamageTaken(0),
-            speed: Speed(2),
+            speed: Speed(2.),
             _p: Player
         });
     }
@@ -79,6 +79,9 @@ struct AvailableJumps(u32);
 struct Lives(u32);
 #[derive(Component)]
 struct DamageTaken(u32);
+
+#[derive(Component)]
+pub struct PlayerSpriteSheet(pub SpriteSheetBundle);
 
 #[derive(Bundle)]
 pub struct PlayerBundle {

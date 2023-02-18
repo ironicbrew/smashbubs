@@ -18,8 +18,8 @@ impl Plugin for GamepadPlugin {
     fn build(&self, app: &mut App) {
         app.add_event::<AddPlayerEvent>()
             // .insert_resource(RumbleTimer(Timer::from_seconds(0., false)))
-            .add_system(gamepad_connections);
-            // .add_system(player_movement.system())
+            .add_system(gamepad_connections)
+            .add_system(player_movement);
             // .add_system(player_fire.system())
             // .add_system(player_jump.system())
             // .add_system(stop_rumbler.system());
@@ -53,49 +53,44 @@ fn gamepad_connections(
     }
 }
 
-// fn player_movement(
-//     axes: Res<Axis<GamepadAxis>>,
-//     mut query: Query<(
-//         &mut TextureAtlasSprite,
-//         &mut Transform,
-//         &mut Speed,
-//         &Gamepad,
-//         With<Player>,
-//     )>,
-// ) {
-//     for (mut sprite, mut transform, speed, gamepad, _) in query.iter_mut() {
-//         let axis_lx = GamepadAxis(*gamepad, GamepadAxisType::LeftStickX);
+fn player_movement(
+    axes: Res<Axis<GamepadAxis>>,
+    mut query: Query<(&mut TextureAtlasSprite, &mut Transform, &mut Speed, &PlayerGamepad), (With<Player>)>
+) {
+    for (mut sprite, mut transform, speed, player_gamepad) in query.iter_mut() {
+        let axis_lx = GamepadAxis {gamepad: player_gamepad.0, axis_type: GamepadAxisType::LeftStickX};
 
-//         let x = if let Some(x) = axes.get(axis_lx) {
-//             x
-//         } else {
-//             return;
-//         };
+        let x = if let Some(x) = axes.get(axis_lx) {
+            x
+        } else {
+            return;
+        };
 
-//         transform.translation.x += x * TIME_STEP;
+        transform.translation.x += x * TIME_STEP;
 
-//         if x != 0. {
-//             face_player_last_direction_moved(sprite, speed.0, transform);
-//             change_player_direction(speed, x);
-//         }
+        if x != 0. {
+            face_player_last_direction_moved(sprite, speed.0, transform);
+            change_player_direction(speed, x);
+        }
 
-//         fn face_player_last_direction_moved(
-//             mut sprite: Mut<TextureAtlasSprite>,
-//             speed: f32,
-//             mut transform: Mut<Transform>,
-//         ) {
-//             if speed > 0. {
-//                 sprite.index = 0;
-//             } else {
-//                 sprite.index = 1;
-//             }
-//         }
+        fn face_player_last_direction_moved(
+            mut player_sprite: Mut<TextureAtlasSprite>,
+            speed: f32,
+            mut transform: Mut<Transform>,
+        ) {
+            if speed > 0. {
+                player_sprite.flip_x = false
+            } 
+            else {
+                player_sprite.flip_x = true
+            }
+        }
 
-//         fn change_player_direction(mut speed: Mut<Speed>, direction: f32) {
-//             speed.0 = direction;
-//         }
-//     }
-// }
+        fn change_player_direction(mut speed: Mut<Speed>, direction: f32) {
+            speed.0 = direction;
+        }
+    }
+}
 
 pub fn rumble(gamepad_ids: &[GamepadId]) {
     let mut gilrs = Gilrs::new().unwrap();
