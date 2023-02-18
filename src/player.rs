@@ -2,6 +2,8 @@ use std::ops::Add;
 
 use bevy::prelude::*;
 
+use crate::gamepad::AddPlayerEvent;
+
 pub struct PlayerPlugin;
 
 const PIG_SPRITE: &str = "pig.png";
@@ -11,6 +13,11 @@ impl Plugin for PlayerPlugin {
         app.add_startup_system(setup_sprites).add_system(add_player).add_event::<AddPlayerEvent>();
     }
 }
+
+#[derive(Component)]
+pub struct Player;
+#[derive(Component)]
+pub struct Speed(u32);
 
 #[derive(Resource)]
 pub struct PlayerMaterials {
@@ -28,23 +35,22 @@ fn setup_sprites(
         Vec2::new(8., 8.),
         2,
         1,
-        Some(Vec2::new(0., 0.)),
-        Some(Vec2::new(0., 0.)),
+        None,
+        None,
     );
     commands.insert_resource(PlayerMaterials {
         player: texture_atlases.add(player_texture_atlas),
     });
 }
 
-pub struct AddPlayerEvent(pub Gamepad);
-
 fn add_player(
     mut commands: Commands,
     mut ev_add_player: EventReader<AddPlayerEvent>,
     player_materials: Res<PlayerMaterials>,
 ) {
-    for _event in ev_add_player.iter() {
+    for event in ev_add_player.iter() {
         commands.spawn(PlayerBundle {
+            gamepad: PlayerGamepad(event.0),
             sprite: SpriteSheetBundle {
                 texture_atlas: player_materials.player.clone(),
                 transform: Transform {
@@ -53,20 +59,37 @@ fn add_player(
                     ..default()
                 },
                 ..default()
-            }
+            },
+            available_jumps: AvailableJumps(2),
+            lives: Lives(3),
+            damage_taken: DamageTaken(0),
+            speed: Speed(2),
+            _p: Player
         });
     }
+
 }
+
+#[derive(Component)]
+pub struct PlayerGamepad(pub Gamepad);
+
+#[derive(Component)]
+struct AvailableJumps(u32);
+#[derive(Component)]
+struct Lives(u32);
+#[derive(Component)]
+struct DamageTaken(u32);
 
 #[derive(Bundle)]
 pub struct PlayerBundle {
-    // pub gamepad: Gamepad,
-    // pub available_jumps: AvailableJumps,
-    // pub lives: Lives,
-    // pub damage_taken: DamageTaken,
-    // pub speed: Speed,
-    // pub _p: Player,
+    pub gamepad: PlayerGamepad,
+    available_jumps: AvailableJumps,
+    lives: Lives,
+    damage_taken: DamageTaken,
+    speed: Speed,
+    _p: Player,
 
+    #[bundle]
     pub sprite: SpriteSheetBundle,
     // pub body: RigidBody,
     // pub shape: CollisionShape,
