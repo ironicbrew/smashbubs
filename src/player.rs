@@ -101,6 +101,7 @@ pub struct PlayerBundle {
     locked_axis: LockedAxes,
     velocity: Velocity,
     active_collision_types: ActiveCollisionTypes,
+    gravity_scale: GravityScale,
 
     #[bundle]
     pub sprite: SpriteSheetBundle,
@@ -123,6 +124,7 @@ impl Default for PlayerBundle {
             locked_axis: LockedAxes::ROTATION_LOCKED,
             velocity: Velocity::default(),
             active_collision_types: ActiveCollisionTypes::default(),
+            gravity_scale: GravityScale(10.)
         }
     }
 }

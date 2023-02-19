@@ -235,7 +235,7 @@ fn player_jump(
         let jump_button = GamepadButton { gamepad: gamepad.0, button_type: GamepadButtonType::South};
         if buttons.just_pressed(jump_button) && available_jumps.0 > 0 {
             available_jumps.0 = available_jumps.0 -1;
-            velocity.linvel = Vec2::Y * 50.
+            velocity.linvel = Vec2::Y * 400.
         }
     }
 }
