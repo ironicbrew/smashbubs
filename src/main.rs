@@ -9,6 +9,7 @@ use camera::CameraPlugin;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 mod gilrs_plugin;
 use gilrs_plugin::GilrsPlugin;
+mod projectile;
 
 fn main() {
     App::new()

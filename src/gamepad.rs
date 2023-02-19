@@ -1,9 +1,10 @@
-use bevy_rapier2d::prelude::Velocity;
+use bevy_rapier2d::prelude::*;
 use gilrs::ff::Effect;
 use std::time::Duration;
 use gilrs::GamepadId;
 use gilrs::Gilrs;
 use crate::player::*;
+use crate::projectile::ProjectileBundle;
 // use super::projectile::*;
 use bevy::prelude::*;
 use gilrs::ff::{BaseEffect, BaseEffectType, EffectBuilder, Replay, Ticks};
@@ -20,7 +21,7 @@ impl Plugin for GamepadPlugin {
             // .insert_resource(RumbleTimer(Timer::from_seconds(0., false)))
             .add_system(gamepad_connections)
             .add_system(player_movement)
-            // .add_system(player_fire.system())
+            .add_system(player_fire)
             .add_system(player_jump);
             // .add_system(stop_rumbler.system());
     }
@@ -122,106 +123,107 @@ pub fn rumble(gamepad_ids: &[GamepadId]) {
 
 // }
 
-// fn player_fire(
-//     mut commands: Commands,
-//     mut gilrs: NonSendMut<Gilrs>,
-//     mut rumble: NonSendMut<Effect>,
-//     axes: Res<Axis<GamepadAxis>>,
-//     mut materials: ResMut<Assets<ColorMaterial>>,
-//     asset_server: Res<AssetServer>,
-//     time: Res<Time>,
-//     buttons: Res<Input<GamepadButton>>,
-//     mut query: Query<(
-//         &mut Velocity,
-//         &mut Transform,
-//         &mut Speed,
-//         &Gamepad,
-//         With<Player>,
-//     )>,
-// ) {
+fn player_fire(
+    mut commands: Commands,
+    mut gilrs: NonSendMut<Gilrs>,
+    mut rumble: NonSendMut<Effect>,
+    axes: Res<Axis<GamepadAxis>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+    asset_server: Res<AssetServer>,
+    time: Res<Time>,
+    buttons: Res<Input<GamepadButton>>,
+    mut query: Query<(
+        &mut Transform,
+        &PlayerGamepad
+    )>,
+    audio: Res<Audio>
+) {
 
-//     // TODO: Way too nested, figure out how to break out of this (closure in rust?)
-//     for (_, transform, _, gamepad, _) in query.iter_mut() {
-//         let fire_button = GamepadButton(*gamepad, GamepadButtonType::RightTrigger2);
+    for (transform, gamepad) in query.iter_mut() {
 
-//         if buttons.just_pressed(fire_button) {
-//             let axis_lx = GamepadAxis(*gamepad, GamepadAxisType::RightStickX);
-//             let axis_ly = GamepadAxis(*gamepad, GamepadAxisType::RightStickY);
-
-
-//             // let mut gilrs = Gilrs::new().unwrap();
-
-//             // let mut gamepads = Vec::new();
-
-//             // for (_id, gamepad) in gilrs.gamepads() {
-//             //     gamepads.push(_id);
-//             // }
-
-//             let test: Vec<GamepadId> = gilrs.gamepads().map(|(_id, _)| _id).collect();
-
-//             rumble.play().unwrap();
-
-//             let rumble_timer = RumbleTimer(Timer::from_seconds(0.2, false));
-
-//             commands.insert_resource(rumble_timer);
+        let fire_button = GamepadButton{gamepad: gamepad.0, button_type: GamepadButtonType::RightTrigger2};
+        
+        if buttons.just_pressed(fire_button) {
+            let gunsound = asset_server.load("sounds/gun.ogg");
+            audio.play(gunsound);
+            let axis_lx = GamepadAxis{gamepad: gamepad.0, axis_type: GamepadAxisType::RightStickX};
+            let axis_ly = GamepadAxis{gamepad: gamepad.0, axis_type: GamepadAxisType::RightStickY};
 
 
-//             //         let effect = EffectBuilder::new()
-//             //         .add_effect(BaseEffect {
-//             //             kind: BaseEffectType::Strong { magnitude: 60_000 },
-//             //             scheduling: Replay {
-//             //                 play_for: Ticks::from_ms(200),
-//             //                 ..Default::default()
-//             //             },
-//             //             envelope: Default::default(),
-//             //         })
-//             //         .gamepads(&[])
-//             //         .finish(&mut gilrs)
-//             //         .unwrap();
-//             //         effect.play().unwrap();
+            // let mut gilrs = Gilrs::new().unwrap();
+
+            // let mut gamepads = Vec::new();
+
+            // for (_id, gamepad) in gilrs.gamepads() {
+            //     gamepads.push(_id);
+            // }
+
+            let test: Vec<GamepadId> = gilrs.gamepads().map(|(_id, _)| _id).collect();
+
+            // rumble.play().unwrap();
+
+            // let rumble_timer = RumbleTimer(Timer::from_seconds(0.2, false));
+
+            // commands.insert_resource(rumble_timer);
+
+
+            //         let effect = EffectBuilder::new()
+            //         .add_effect(BaseEffect {
+            //             kind: BaseEffectType::Strong { magnitude: 60_000 },
+            //             scheduling: Replay {
+            //                 play_for: Ticks::from_ms(200),
+            //                 ..Default::default()
+            //             },
+            //             envelope: Default::default(),
+            //         })
+            //         .gamepads(&[])
+            //         .finish(&mut gilrs)
+            //         .unwrap();
+            //         effect.play().unwrap();
 
 
                     
-//                     // thread::sleep(Duration::from_millis(100));
-//                     // effect.stop().unwrap();
+                    // thread::sleep(Duration::from_millis(100));
+                    // effect.stop().unwrap();
 
-//             if let (Some(x), Some(y)) = (axes.get(axis_lx), axes.get(axis_ly)) {
-//                 let right_stick_pos = Vec3::new(x, y, 0.);
-//                 if right_stick_pos.length() > 0.1 {
-//                     commands
-//                         .spawn()
-//                         .insert_bundle(ProjectileBundle {
-//                             _p: Projectile,
-//                             sprite: SpriteBundle {
-//                                 material: materials.add(asset_server.load(BULLET_SPRITE).into()),
-//                                 transform: Transform {
-//                                     scale: Vec3::new(2., 2., 1.),
-//                                     translation: Vec3::new(
-//                                         transform.translation.x + right_stick_pos.x,
-//                                         transform.translation.y + right_stick_pos.y,
-//                                         0.,
-//                                     ),
-//                                     ..Default::default()
-//                                 },
-//                                 ..Default::default()
-//                             },
-//                         })
-//                         .insert(RigidBody::Dynamic)
-//                         .insert(CollisionShape::Cuboid {
-//                             half_extends: Vec3::new(2., 2., 1.),
-//                             border_radius: Some(0.),
-//                         })
-//                         .insert(PhysicMaterial {
-//                             restitution: 0.,
-//                             density: 1., // Define the density. Higher value means heavier.
-//                             friction: 0., // Define the friction. Higher value means higher friction.
-//                         })
-//                         .insert(Velocity::from_linear(right_stick_pos * 1000.));
-//                 }
-//             }
-//         }
-//     }
-// }
+            if let (Some(x), Some(y)) = (axes.get(axis_lx), axes.get(axis_ly)) {
+                let right_stick_pos = Vec2::new(x, y);
+                if right_stick_pos.length() > 0.1 {
+                    commands
+                        .spawn(ProjectileBundle {
+                            sprite: SpriteBundle {
+                                texture: asset_server.load(BULLET_SPRITE),
+                                // material: materials.add(asset_server.load(BULLET_SPRITE).into()),
+                                transform: Transform {
+                                    scale: Vec3::new(2., 2., 1.),
+                                    translation: Vec3::new(
+                                        transform.translation.x + right_stick_pos.x,
+                                        transform.translation.y + right_stick_pos.y,
+                                        0.,
+                                    ),
+                                    ..default()
+                                },
+                                ..default()
+                            },
+                            ..default()
+                        })
+                        .insert(RigidBody::Dynamic)
+                        .insert(Collider::cuboid(2., 2.))
+                        // .insert(CollisionShape::Cuboid {
+                        //     half_extends: Vec3::new(2., 2., 1.),
+                        //     border_radius: Some(0.),
+                        // })
+                        // .insert(PhysicMaterial {
+                        //     restitution: 0.,
+                        //     density: 1., // Define the density. Higher value means heavier.
+                        //     friction: 0., // Define the friction. Higher value means higher friction.
+                        // })
+                        .insert(Velocity::linear(right_stick_pos * 1000.));
+                }
+            }
+        }
+    }
+}
 
 fn player_jump(
     buttons: Res<Input<GamepadButton>>,
