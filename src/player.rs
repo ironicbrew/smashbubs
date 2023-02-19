@@ -11,7 +11,7 @@ impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(setup_sprites)
             .add_system(add_player)
-            // .add_system(respawn_players_who_leave_window)
+            .add_system(respawn_players_who_leave_window)
             .add_event::<AddPlayerEvent>();
     }
 }
@@ -85,13 +85,6 @@ struct DamageTaken(u32);
 #[derive(Component)]
 pub struct PlayerSpriteSheet(pub SpriteSheetBundle);
 
-#[derive(Component)]
-pub struct PlayerPhysics {
-    pub rigid_body: RigidBody,
-    pub collider: Collider,
-    // pub rotation_constraints: RotationConstraints,
-}
-
 #[derive(Bundle)]
 pub struct PlayerBundle {
     pub gamepad: PlayerGamepad,
@@ -103,7 +96,6 @@ pub struct PlayerBundle {
     rigid_body: RigidBody,
     collider: Collider,
     locked_axis: LockedAxes,
-    // transform: Transform,
 
     #[bundle]
     pub sprite: SpriteSheetBundle,
@@ -125,40 +117,39 @@ impl Default for PlayerBundle {
             rigid_body: RigidBody::Dynamic,
             collider: Collider::cuboid(4., 4.),
             locked_axis: LockedAxes::ROTATION_LOCKED,
-            // transform: Transform::from_xyz(0., 5., 0.)
 
         }
     }
 }
 
-// fn respawn_players_who_leave_window(
-//     mut commands: Commands,
-//     mut windows: ResMut<Windows>,
-//     mut query: Query<(
-//         Entity,
-//         &mut Transform,
-//         &mut Lives,
-//         &mut DamageTaken,
-//         &mut PlayerPhysics,
-//     )>,
-// ) {
-//     if let Some(window) = windows.iter().next() {
-//         for (player_entity, mut transform, mut lives, mut damage_taken, mut player_physics) in
-//             query.iter_mut()
-//         {
-//             if transform.translation.y.abs() > window.height() / 2.
-//                 || transform.translation.x.abs() > window.width() / 2.
-//             {
-//                 lives.0 = lives.0 - 1;
-//                 damage_taken.0 = 0;
+fn respawn_players_who_leave_window(
+    mut commands: Commands,
+    windows: ResMut<Windows>,
+    mut query: Query<(
+        Entity,
+        &mut Transform,
+        &mut Lives,
+        &mut DamageTaken,
+    )>,
+) {
+    if let Some(window) = windows.iter().next() {
+        for (player_entity, mut transform, mut lives, mut damage_taken) in
+            query.iter_mut()
+        {
+            println!("found");
+            if transform.translation.y.abs() > window.height() / 2.
+                || transform.translation.x.abs() > window.width() / 2.
+            {
+                lives.0 = lives.0 - 1;
+                damage_taken.0 = 0;
 
-//                 if lives.0 == 0 {
-//                     commands.entity(player_entity).despawn();
-//                 } else {
-//                     transform.translation = Vec3::new(0., 0., 1.);
-//                     // player_physics.velocity.linear = Vec3::Y * 100.;
-//                 }
-//             }
-//         }
-//     }
-// }
+                if lives.0 == 0 {
+                    commands.entity(player_entity).despawn();
+                } else {
+                    transform.translation = Vec3::new(0., 0., 1.);
+                    // player_physics.velocity.linear = Vec3::Y * 100.;
+                }
+            }
+        }
+    }
+}
