@@ -1,7 +1,5 @@
-use std::ops::Add;
-
-use bevy::{ecs::component, math::Vec3, prelude::*};
-use rapier2d::prelude::{RigidBody, RigidBodyBuilder};
+use bevy::{math::Vec3, prelude::*};
+use bevy_rapier2d::prelude::*;
 
 use crate::gamepad::AddPlayerEvent;
 
@@ -13,7 +11,7 @@ impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(setup_sprites)
             .add_system(add_player)
-            .add_system(respawn_players_who_leave_window)
+            // .add_system(respawn_players_who_leave_window)
             .add_event::<AddPlayerEvent>();
     }
 }
@@ -60,6 +58,17 @@ fn add_player(
             },
             ..default()
         });
+
+        commands
+        .spawn(Collider::cuboid(500.0, 50.0))
+        .insert(TransformBundle::from(Transform::from_xyz(0.0, -100.0, 0.0)));
+
+    /* Create the bouncing ball. */
+    commands
+        .spawn(RigidBody::Dynamic)
+        .insert(Collider::ball(50.0))
+        .insert(Restitution::coefficient(0.7))
+        .insert(TransformBundle::from(Transform::from_xyz(0.0, 400.0, 0.0)));
     }
 }
 
@@ -79,8 +88,7 @@ pub struct PlayerSpriteSheet(pub SpriteSheetBundle);
 #[derive(Component)]
 pub struct PlayerPhysics {
     pub rigid_body: RigidBody,
-    // pub collision_shape: CollisionShape,
-    // pub velocity: Velocity,
+    pub collider: Collider,
     // pub rotation_constraints: RotationConstraints,
 }
 
@@ -92,11 +100,12 @@ pub struct PlayerBundle {
     damage_taken: DamageTaken,
     speed: Speed,
     _p: Player,
+    rigid_body: RigidBody,
+    collider: Collider,
 
     #[bundle]
     pub sprite: SpriteSheetBundle,
 
-    pub player_physics: PlayerPhysics,
 }
 
 impl Default for PlayerBundle {
@@ -111,47 +120,41 @@ impl Default for PlayerBundle {
             sprite: SpriteSheetBundle {
                 ..Default::default()
             },
-            player_physics: PlayerPhysics {
-                rigid_body: RigidBodyBuilder::dynamic().build(),
-                // collision_shape: CollisionShape::Cuboid {
-                //     half_extends: Vec3::new(8., 8., 1.),
-                //     border_radius: Some(0.),
-                // },
-                // velocity: Velocity::from_linear(Vec3::Y * 100.),
-                // rotation_constraints: RotationConstraints::lock(),
-            },
+            rigid_body: RigidBody::Dynamic,
+            collider: Collider::cuboid(4., 4.)
+
         }
     }
 }
 
-fn respawn_players_who_leave_window(
-    mut commands: Commands,
-    mut windows: ResMut<Windows>,
-    mut query: Query<(
-        Entity,
-        &mut Transform,
-        &mut Lives,
-        &mut DamageTaken,
-        &mut PlayerPhysics,
-    )>,
-) {
-    if let Some(window) = windows.iter().next() {
-        for (player_entity, mut transform, mut lives, mut damage_taken, mut player_physics) in
-            query.iter_mut()
-        {
-            if transform.translation.y.abs() > window.height() / 2.
-                || transform.translation.x.abs() > window.width() / 2.
-            {
-                lives.0 = lives.0 - 1;
-                damage_taken.0 = 0;
+// fn respawn_players_who_leave_window(
+//     mut commands: Commands,
+//     mut windows: ResMut<Windows>,
+//     mut query: Query<(
+//         Entity,
+//         &mut Transform,
+//         &mut Lives,
+//         &mut DamageTaken,
+//         &mut PlayerPhysics,
+//     )>,
+// ) {
+//     if let Some(window) = windows.iter().next() {
+//         for (player_entity, mut transform, mut lives, mut damage_taken, mut player_physics) in
+//             query.iter_mut()
+//         {
+//             if transform.translation.y.abs() > window.height() / 2.
+//                 || transform.translation.x.abs() > window.width() / 2.
+//             {
+//                 lives.0 = lives.0 - 1;
+//                 damage_taken.0 = 0;
 
-                if lives.0 == 0 {
-                    commands.entity(player_entity).despawn();
-                } else {
-                    transform.translation = Vec3::new(0., 0., 1.);
-                    // player_physics.velocity.linear = Vec3::Y * 100.;
-                }
-            }
-        }
-    }
-}
+//                 if lives.0 == 0 {
+//                     commands.entity(player_entity).despawn();
+//                 } else {
+//                     transform.translation = Vec3::new(0., 0., 1.);
+//                     // player_physics.velocity.linear = Vec3::Y * 100.;
+//                 }
+//             }
+//         }
+//     }
+// }

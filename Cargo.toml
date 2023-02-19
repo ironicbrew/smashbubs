@@ -8,8 +8,8 @@ edition = "2021"
 [dependencies]
 bevy = { version = "0.9.1", features = ["dynamic"] }
 bevy-inspector-egui = "0.17.0"
+bevy_rapier2d = "0.20.0"
 gilrs = "0.10.1"
-rapier2d = { version = "0.17.1", features = ["simd-stable"]}
 
 # Enable a small amount of optimization in debug mode
 [profile.dev]
