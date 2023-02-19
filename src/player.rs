@@ -1,5 +1,5 @@
 use bevy::{math::Vec3, prelude::*};
-use bevy_rapier2d::prelude::*;
+use bevy_rapier2d::{prelude::*, na::Rotation};
 
 use crate::gamepad::AddPlayerEvent;
 
@@ -102,6 +102,8 @@ pub struct PlayerBundle {
     _p: Player,
     rigid_body: RigidBody,
     collider: Collider,
+    locked_axis: LockedAxes,
+    // transform: Transform,
 
     #[bundle]
     pub sprite: SpriteSheetBundle,
@@ -121,7 +123,9 @@ impl Default for PlayerBundle {
                 ..Default::default()
             },
             rigid_body: RigidBody::Dynamic,
-            collider: Collider::cuboid(4., 4.)
+            collider: Collider::cuboid(4., 4.),
+            locked_axis: LockedAxes::ROTATION_LOCKED,
+            // transform: Transform::from_xyz(0., 5., 0.)
 
         }
     }
