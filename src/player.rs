@@ -1,5 +1,5 @@
 use bevy::{math::Vec3, prelude::*};
-use bevy_rapier2d::{prelude::*, na::Rotation};
+use bevy_rapier2d::{na::Rotation, prelude::*};
 
 use crate::gamepad::AddPlayerEvent;
 
@@ -11,6 +11,7 @@ impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(setup_sprites)
             .add_system(add_player)
+            .add_system(reset_jumps)
             .add_system(respawn_players_who_leave_window)
             .add_event::<AddPlayerEvent>();
     }
@@ -60,15 +61,17 @@ fn add_player(
         });
 
         commands
-        .spawn(Collider::cuboid(500.0, 50.0))
-        .insert(TransformBundle::from(Transform::from_xyz(0.0, -100.0, 0.0)));
+            .spawn(Collider::cuboid(500.0, 50.0))
+            .insert(TransformBundle::from(Transform::from_xyz(0.0, -100.0, 0.0)))
+            .insert(ActiveEvents::COLLISION_EVENTS);
 
-    /* Create the bouncing ball. */
-    commands
-        .spawn(RigidBody::Dynamic)
-        .insert(Collider::ball(50.0))
-        .insert(Restitution::coefficient(0.7))
-        .insert(TransformBundle::from(Transform::from_xyz(0.0, 400.0, 0.0)));
+        /* Create the bouncing ball. */
+        commands
+            .spawn(RigidBody::Dynamic)
+            .insert(Collider::ball(50.0))
+            .insert(Restitution::coefficient(0.7))
+            .insert(TransformBundle::from(Transform::from_xyz(0.0, 400.0, 0.0)))
+            .insert(ActiveEvents::COLLISION_EVENTS);
     }
 }
 
@@ -97,16 +100,16 @@ pub struct PlayerBundle {
     collider: Collider,
     locked_axis: LockedAxes,
     velocity: Velocity,
+    active_collision_types: ActiveCollisionTypes,
 
     #[bundle]
     pub sprite: SpriteSheetBundle,
-
 }
 
 impl Default for PlayerBundle {
     fn default() -> PlayerBundle {
         PlayerBundle {
-            gamepad: PlayerGamepad(Gamepad {id: 1}),
+            gamepad: PlayerGamepad(Gamepad { id: 1 }),
             damage_taken: DamageTaken(0),
             available_jumps: AvailableJumps(2),
             lives: Lives(2),
@@ -118,8 +121,8 @@ impl Default for PlayerBundle {
             rigid_body: RigidBody::Dynamic,
             collider: Collider::cuboid(4., 4.),
             locked_axis: LockedAxes::ROTATION_LOCKED,
-            velocity: Velocity::default()
-
+            velocity: Velocity::default(),
+            active_collision_types: ActiveCollisionTypes::default(),
         }
     }
 }
@@ -127,18 +130,10 @@ impl Default for PlayerBundle {
 fn respawn_players_who_leave_window(
     mut commands: Commands,
     windows: ResMut<Windows>,
-    mut query: Query<(
-        Entity,
-        &mut Transform,
-        &mut Lives,
-        &mut DamageTaken,
-    )>,
+    mut query: Query<(Entity, &mut Transform, &mut Lives, &mut DamageTaken)>,
 ) {
     if let Some(window) = windows.iter().next() {
-        for (player_entity, mut transform, mut lives, mut damage_taken) in
-            query.iter_mut()
-        {
-            println!("found");
+        for (player_entity, mut transform, mut lives, mut damage_taken) in query.iter_mut() {
             if transform.translation.y.abs() > window.height() / 2.
                 || transform.translation.x.abs() > window.width() / 2.
             {
@@ -151,6 +146,24 @@ fn respawn_players_who_leave_window(
                     transform.translation = Vec3::new(0., 0., 1.);
                 }
             }
+        }
+    }
+}
+
+fn reset_jumps(
+    mut events: EventReader<CollisionEvent>,
+    mut player_query: Query<(Entity, &mut AvailableJumps)>,
+) {
+    for event in events.iter() {
+        match event {
+            CollisionEvent::Started(collider1, collider2, _) => {
+                for (player_entity, mut available_jumps) in player_query.iter_mut() {
+                    if *collider1 == player_entity || *collider2 == player_entity {
+                        available_jumps.0 = 2
+                    }
+                }
+            }
+            CollisionEvent::Stopped(_, _, _) => {}
         }
     }
 }
