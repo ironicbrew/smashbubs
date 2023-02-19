@@ -1,3 +1,4 @@
+use bevy_rapier2d::prelude::Velocity;
 use gilrs::ff::Effect;
 use std::time::Duration;
 use gilrs::GamepadId;
@@ -18,9 +19,9 @@ impl Plugin for GamepadPlugin {
         app.add_event::<AddPlayerEvent>()
             // .insert_resource(RumbleTimer(Timer::from_seconds(0., false)))
             .add_system(gamepad_connections)
-            .add_system(player_movement);
+            .add_system(player_movement)
             // .add_system(player_fire.system())
-            // .add_system(player_jump.system())
+            .add_system(player_jump);
             // .add_system(stop_rumbler.system());
     }
 }
@@ -222,22 +223,23 @@ pub fn rumble(gamepad_ids: &[GamepadId]) {
 //     }
 // }
 
-// fn player_jump(
-//     buttons: Res<Input<GamepadButton>>,
-//     mut query: Query<(
-//         &mut Velocity,
-//         &mut AvailableJumps,
-//         &mut Transform,
-//         &mut Speed,
-//         &Gamepad,
-//         With<Player>,
-//     )>,
-// ) {
-//     for (mut velocity, mut available_jumps, _, _, gamepad, _) in query.iter_mut() {
-//         let jump_button = GamepadButton(*gamepad, GamepadButtonType::South);
-//         if buttons.just_pressed(jump_button) && available_jumps.0 > 0 {
-//             velocity.linear = Vec3::Y * 400.;
-//             available_jumps.0 = available_jumps.0 - 1;
-//         }
-//     }
-// }
+fn player_jump(
+    buttons: Res<Input<GamepadButton>>,
+    mut query: Query<(
+        &mut AvailableJumps,
+        &mut Velocity,
+        &PlayerGamepad,
+    )>,
+) {
+    for (mut available_jumps, mut velocity, gamepad,) in query.iter_mut() {
+        let jump_button = GamepadButton { gamepad: gamepad.0, button_type: GamepadButtonType::South};
+        if buttons.just_pressed(jump_button) && available_jumps.0 > 0 {
+            available_jumps.0 = available_jumps.0 -1;
+            velocity.linvel = Vec2::Y * 200.
+        }
+        // let jump_button = GamepadButton(*gamepad.0, GamepadButtonType::South);
+        // if buttons.just_pressed(jump_button) && available_jumps.0 > 0 {
+            // available_jumps.0 = available_jumps.0 - 1;
+        // }
+    }
+}

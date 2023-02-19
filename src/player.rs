@@ -76,11 +76,11 @@ fn add_player(
 pub struct PlayerGamepad(pub Gamepad);
 
 #[derive(Component)]
-struct AvailableJumps(u32);
+pub struct AvailableJumps(pub u32);
 #[derive(Component)]
-struct Lives(u32);
+pub struct Lives(u32);
 #[derive(Component)]
-struct DamageTaken(u32);
+pub struct DamageTaken(u32);
 
 #[derive(Component)]
 pub struct PlayerSpriteSheet(pub SpriteSheetBundle);
@@ -96,6 +96,7 @@ pub struct PlayerBundle {
     rigid_body: RigidBody,
     collider: Collider,
     locked_axis: LockedAxes,
+    velocity: Velocity,
 
     #[bundle]
     pub sprite: SpriteSheetBundle,
@@ -117,6 +118,7 @@ impl Default for PlayerBundle {
             rigid_body: RigidBody::Dynamic,
             collider: Collider::cuboid(4., 4.),
             locked_axis: LockedAxes::ROTATION_LOCKED,
+            velocity: Velocity::default()
 
         }
     }
@@ -147,7 +149,6 @@ fn respawn_players_who_leave_window(
                     commands.entity(player_entity).despawn();
                 } else {
                     transform.translation = Vec3::new(0., 0., 1.);
-                    // player_physics.velocity.linear = Vec3::Y * 100.;
                 }
             }
         }
