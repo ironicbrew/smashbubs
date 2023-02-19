@@ -5,7 +5,6 @@ use gilrs::Gilrs;
 use crate::player::*;
 // use super::projectile::*;
 use bevy::prelude::*;
-use heron::prelude::*;
 use gilrs::ff::{BaseEffect, BaseEffectType, EffectBuilder, Replay, Ticks};
 use std::thread;
 
