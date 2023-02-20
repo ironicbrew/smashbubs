@@ -182,9 +182,8 @@ fn player_fire(
                         .spawn(ProjectileBundle {
                             sprite: SpriteBundle {
                                 texture: asset_server.load(BULLET_SPRITE),
-                                // material: materials.add(asset_server.load(BULLET_SPRITE).into()),
                                 transform: Transform {
-                                    scale: Vec3::new(2., 2., 1.),
+                                    scale: Vec3::new(1., 1., 1.),
                                     translation: Vec3::new(
                                         transform.translation.x + right_stick_pos.x,
                                         transform.translation.y + right_stick_pos.y,
@@ -197,7 +196,7 @@ fn player_fire(
                             ..default()
                         })
                         .insert(RigidBody::Dynamic)
-                        .insert(Collider::cuboid(2., 2.))
+                        .insert(Collider::cuboid(1., 1.))
                         // .insert(CollisionShape::Cuboid {
                         //     half_extends: Vec3::new(2., 2., 1.),
                         //     border_radius: Some(0.),

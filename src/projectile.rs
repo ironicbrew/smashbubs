@@ -1,7 +1,7 @@
 use super::player::*;
 use bevy::ecs::bundle::Bundle;
 use bevy::{prelude::*, sprite::collide_aabb::*};
-use bevy_rapier2d::prelude::{Collider, Velocity};
+use bevy_rapier2d::prelude::{Collider, Velocity, CollisionEvent, ContactForceEvent};
 
 #[derive(Bundle)]
 pub struct ProjectileBundle {
@@ -26,8 +26,9 @@ pub struct ProjectilePlugin;
 impl Plugin for ProjectilePlugin {
     fn build(&self, app: &mut App) {
         app.add_system(clean_up_offscreen_projectiles)
-        .add_system(projectile_hit_player);
-        // .add_system(projectile_hit_map.system());
+        .add_system(projectile_hit_player)
+        // .add_system(display_events)
+        .add_system(projectile_hit_map);
     }
 }
 
@@ -48,18 +49,20 @@ fn clean_up_offscreen_projectiles(
 
 fn projectile_hit_player(
     mut commands: Commands,
-    mut projectile_query: Query<(Entity, &Transform), With<Projectile>>,
-    mut player_query: Query<(&Transform, &Collider, &mut DamageTaken, &mut Velocity, With<Player>)>,
+    atlases: Res<Assets<TextureAtlas>>,
+    images: Res<Assets<Image>>,
+    mut projectile_query: Query<(Entity, &Transform, &Handle<Image>), With<Projectile>>,
+    mut player_query: Query<(&Transform, &Handle<TextureAtlas>, &mut DamageTaken, &mut Velocity, With<Player>)>,
 ) {
-    for (projectile_entity, projectile_transform) in
+    for (projectile_entity, projectile_transform, projectile_image) in
         projectile_query.iter_mut()
     {
         for (player_transform, player_sprite, mut damage_taken, mut velocity, _) in player_query.iter_mut() {
             let collision = collide(
                 projectile_transform.translation,
-                player_sprite.scale(),
+                images.get(projectile_image).unwrap().size(),
                 player_transform.translation,
-                player_sprite.scale(),
+                atlases.get(player_sprite).unwrap().size,
             );
 
             if let Some(collision) = collision {
@@ -88,25 +91,35 @@ fn projectile_hit_player(
     }
 }
 
-// fn projectile_hit_map(
-//     mut commands: Commands,
-//     mut projectile_query: Query<(Entity, &Transform, &Sprite, With<Projectile>)>,
-//     mut map_query: Query<(&Transform, &Sprite, With<Map>)>,
-// ) {
-//     for (projectile_entity, projectile_transform, projectile_sprite, _) in
-//         projectile_query.iter_mut()
-//     {
-//         for (map_transform, map_sprite, _) in map_query.iter_mut() {
-//             let collision = collide(
-//                 projectile_transform.translation,
-//                 projectile_sprite.size * Vec2::from(projectile_transform.scale),
-//                 map_transform.translation,
-//                 map_sprite.size * Vec2::from(map_transform.scale),
-//             );
+fn projectile_hit_map(
+    mut commands: Commands,
+    images: Res<Assets<Image>>,
+    mut projectile_query: Query<(Entity, &Transform, &Handle<Image>), With<Projectile>>,
+    mut map_query: Query<(&Transform), With<Map>>,
+) {
+    for (projectile_entity, projectile_transform, projectile_image) in
+        projectile_query.iter_mut()
+    {
+        for (map_transform) in map_query.iter_mut() {
+            println!("{:?}, {:?},{:?},{:?},", projectile_transform.translation, images.get(projectile_image).unwrap().size(), map_transform.translation,Vec2::new(500., 50.));
+            let collision = collide(
+                projectile_transform.translation,
+                images.get(projectile_image).unwrap().size(),
+                map_transform.translation,
+                Vec2::new(1000., 100.),
+            );
 
-//             if let Some(_) = collision {
-//                 commands.entity(projectile_entity).despawn();
-//             }
-//         }
-//     }
-// }
+            if let Some(_) = collision {
+                commands.entity(projectile_entity).despawn();
+            }
+        }
+    }
+}
+
+fn display_events(
+    mut collision_events: EventReader<CollisionEvent>,
+) {
+    for collision_event in collision_events.iter() {
+        println!("Received collision event: {:?}", collision_event);
+    }
+}
