@@ -7,9 +7,12 @@ pub struct PlayerPlugin;
 
 const PIG_SPRITE: &str = "pig.png";
 
+const DEFAULT_PLATFORM_THICKNESS: f32 = 10.;
+
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(setup_sprites)
+            .add_startup_system(setup_map)
             .add_system(add_player)
             .add_system(reset_jumps)
             .add_system(respawn_players_who_leave_window)
@@ -62,13 +65,88 @@ fn add_player(
             },
             ..default()
         });
+    }
+}
 
+fn setup_map(mut commands: Commands, windows: ResMut<Windows>) {
+    let window = windows.iter().next().unwrap();
+    
+
+    let setup_bottom_block = |commands: &mut Commands| {
         commands
-            .spawn(Collider::cuboid(500.0, 50.0))
-            .insert(TransformBundle::from(Transform::from_xyz(0.0, -100.0, 1.0)))
+            .spawn(Collider::cuboid(window.width(), DEFAULT_PLATFORM_THICKNESS))
+            .insert(TransformBundle::from(Transform::from_xyz(
+                0.0,
+                -(window.height() / 2.) + DEFAULT_PLATFORM_THICKNESS,
+                1.0,
+            )))
             .insert(ActiveEvents::COLLISION_EVENTS)
             .insert(Map);
-    }
+    };
+    
+    let setup_top_block = |commands: &mut Commands| {
+        commands
+            .spawn(Collider::cuboid(window.width(), DEFAULT_PLATFORM_THICKNESS))
+            .insert(TransformBundle::from(Transform::from_xyz(
+                0.0,
+                (window.height() / 2.) - DEFAULT_PLATFORM_THICKNESS,
+                1.0,
+            )))
+            .insert(ActiveEvents::COLLISION_EVENTS)
+            .insert(Map);
+    };
+    let setup_left_block = |commands: &mut Commands| {
+        commands
+            .spawn(Collider::cuboid(DEFAULT_PLATFORM_THICKNESS, window.height()))
+            .insert(TransformBundle::from(Transform::from_xyz(
+                -(window.width() / 2.) + DEFAULT_PLATFORM_THICKNESS,
+                0.,
+                1.,
+            )))
+            .insert(ActiveEvents::COLLISION_EVENTS)
+            .insert(Map);
+    };
+
+    let setup_right_block = |commands: &mut Commands| {
+        commands
+            .spawn(Collider::cuboid(DEFAULT_PLATFORM_THICKNESS, window.height()))
+            .insert(TransformBundle::from(Transform::from_xyz(
+                (window.width() / 2.) - DEFAULT_PLATFORM_THICKNESS,
+                0.,
+                1.,
+            )))
+            .insert(ActiveEvents::COLLISION_EVENTS)
+            .insert(Map);
+    };
+
+    
+    
+    let create_platform = |commands: &mut Commands, width: f32,x_coord: f32, y_coord: f32| {
+        commands
+            .spawn(Collider::cuboid(width, DEFAULT_PLATFORM_THICKNESS))
+            .insert(TransformBundle::from(Transform::from_xyz(
+                x_coord,
+                -(window.height() / 2.) + DEFAULT_PLATFORM_THICKNESS + y_coord,
+                1.,
+            )))
+            .insert(ActiveEvents::COLLISION_EVENTS)
+            .insert(Map);
+};
+        
+setup_top_block(&mut commands);
+setup_bottom_block(&mut commands);
+setup_left_block(&mut commands);
+create_platform(&mut commands, 200., -300., 100.);
+create_platform(&mut commands, 200., 300., 100.);
+create_platform(&mut commands, 200., 0., 200.);
+create_platform(&mut commands, 200., -300., 300.);
+create_platform(&mut commands, 200., 300., 300.);
+create_platform(&mut commands, 200., 0., 400.);
+create_platform(&mut commands, 200., -300., 500.);
+create_platform(&mut commands, 200., 300., 500.);
+// create_platform(&mut commands, 200., -300., 100.);
+// create_platform(&mut commands, 200., -300., 100.);
+// create_platform(&mut commands, 200., -300., 100.);
 }
 
 #[derive(Component)]
@@ -120,7 +198,7 @@ impl Default for PlayerBundle {
             locked_axis: LockedAxes::ROTATION_LOCKED,
             velocity: Velocity::default(),
             active_collision_types: ActiveCollisionTypes::default(),
-            gravity_scale: GravityScale(10.)
+            gravity_scale: GravityScale(10.),
         }
     }
 }

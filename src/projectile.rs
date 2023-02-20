@@ -28,7 +28,6 @@ impl Plugin for ProjectilePlugin {
         app.add_system(clean_up_offscreen_projectiles)
         .add_system(projectile_hit_player)
         .add_system(projectile_collided);
-        // .add_system(projectile_hit_map);
     }
 }
 
@@ -91,30 +90,6 @@ fn projectile_hit_player(
     }
 }
 
-fn projectile_hit_map(
-    mut commands: Commands,
-    images: Res<Assets<Image>>,
-    mut projectile_query: Query<(Entity, &Transform, &Handle<Image>), With<Projectile>>,
-    mut map_query: Query<&Transform, With<Map>>,
-) {
-    for (projectile_entity, projectile_transform, projectile_image) in
-        projectile_query.iter_mut()
-    {
-        for map_transform in map_query.iter_mut() {
-            let collision = collide(
-                projectile_transform.translation,
-                images.get(projectile_image).unwrap().size(),
-                map_transform.translation,
-                Vec2::new(1000., 100.),
-            );
-
-            if let Some(_) = collision {
-                commands.entity(projectile_entity).despawn();
-            }
-        }
-    }
-}
-
 fn projectile_collided(
     mut commands: Commands,
     mut collision_events: EventReader<CollisionEvent>,
@@ -133,6 +108,5 @@ fn projectile_collided(
             },
             _ => {}
         }
-        // println!("Received collision event: {:?}", collision_event);
     }
 }
