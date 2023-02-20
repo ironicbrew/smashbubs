@@ -13,6 +13,7 @@ impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(setup_sprites)
             .add_startup_system(setup_map)
+            .add_startup_system(render_player_ui)
             .add_system(add_player)
             .add_system(reset_jumps)
             .add_system(respawn_players_who_leave_window)
@@ -70,7 +71,6 @@ fn add_player(
 
 fn setup_map(mut commands: Commands, windows: ResMut<Windows>) {
     let window = windows.iter().next().unwrap();
-    
 
     let setup_bottom_block = |commands: &mut Commands| {
         commands
@@ -83,7 +83,7 @@ fn setup_map(mut commands: Commands, windows: ResMut<Windows>) {
             .insert(ActiveEvents::COLLISION_EVENTS)
             .insert(Map);
     };
-    
+
     let setup_top_block = |commands: &mut Commands| {
         commands
             .spawn(Collider::cuboid(window.width(), DEFAULT_PLATFORM_THICKNESS))
@@ -97,7 +97,10 @@ fn setup_map(mut commands: Commands, windows: ResMut<Windows>) {
     };
     let setup_left_block = |commands: &mut Commands| {
         commands
-            .spawn(Collider::cuboid(DEFAULT_PLATFORM_THICKNESS, window.height()))
+            .spawn(Collider::cuboid(
+                DEFAULT_PLATFORM_THICKNESS,
+                window.height(),
+            ))
             .insert(TransformBundle::from(Transform::from_xyz(
                 -(window.width() / 2.) + DEFAULT_PLATFORM_THICKNESS,
                 0.,
@@ -109,7 +112,10 @@ fn setup_map(mut commands: Commands, windows: ResMut<Windows>) {
 
     let setup_right_block = |commands: &mut Commands| {
         commands
-            .spawn(Collider::cuboid(DEFAULT_PLATFORM_THICKNESS, window.height()))
+            .spawn(Collider::cuboid(
+                DEFAULT_PLATFORM_THICKNESS,
+                window.height(),
+            ))
             .insert(TransformBundle::from(Transform::from_xyz(
                 (window.width() / 2.) - DEFAULT_PLATFORM_THICKNESS,
                 0.,
@@ -119,9 +125,7 @@ fn setup_map(mut commands: Commands, windows: ResMut<Windows>) {
             .insert(Map);
     };
 
-    
-    
-    let create_platform = |commands: &mut Commands, width: f32,x_coord: f32, y_coord: f32| {
+    let create_platform = |commands: &mut Commands, width: f32, x_coord: f32, y_coord: f32| {
         commands
             .spawn(Collider::cuboid(width, DEFAULT_PLATFORM_THICKNESS))
             .insert(TransformBundle::from(Transform::from_xyz(
@@ -131,20 +135,20 @@ fn setup_map(mut commands: Commands, windows: ResMut<Windows>) {
             )))
             .insert(ActiveEvents::COLLISION_EVENTS)
             .insert(Map);
-};
-        
-setup_top_block(&mut commands);
-setup_bottom_block(&mut commands);
-setup_left_block(&mut commands);
-setup_right_block(&mut commands);
-create_platform(&mut commands, 200., -300., 100.);
-create_platform(&mut commands, 200., 300., 100.);
-create_platform(&mut commands, 200., 0., 200.);
-create_platform(&mut commands, 200., -300., 300.);
-create_platform(&mut commands, 200., 300., 300.);
-create_platform(&mut commands, 200., 0., 400.);
-create_platform(&mut commands, 200., -300., 500.);
-create_platform(&mut commands, 200., 300., 500.);
+    };
+
+    setup_top_block(&mut commands);
+    setup_bottom_block(&mut commands);
+    setup_left_block(&mut commands);
+    setup_right_block(&mut commands);
+    create_platform(&mut commands, 200., -300., 100.);
+    create_platform(&mut commands, 200., 300., 100.);
+    create_platform(&mut commands, 200., 0., 200.);
+    create_platform(&mut commands, 200., -300., 300.);
+    create_platform(&mut commands, 200., 300., 300.);
+    create_platform(&mut commands, 200., 0., 400.);
+    create_platform(&mut commands, 200., -300., 500.);
+    create_platform(&mut commands, 200., 300., 500.);
 }
 
 #[derive(Component)]
@@ -240,4 +244,56 @@ fn reset_jumps(
             CollisionEvent::Stopped(_, _, _) => {}
         }
     }
+}
+
+fn render_player_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
+    commands
+        // Screen
+        .spawn(NodeBundle {
+            style: Style {
+                size: Size::new(Val::Percent(100.), Val::Percent(100.)),
+                justify_content: JustifyContent::SpaceBetween,
+                align_content: AlignContent::FlexEnd,
+                ..default()
+            },
+            ..default()
+        })
+        // bottom container
+        .with_children(|parent| {
+            parent
+                .spawn(NodeBundle {
+                    style: Style {
+                        align_self: AlignSelf::FlexEnd,
+                        size: Size::new(Val::Percent(100.), Val::Px(200.)),
+                        ..default()
+                    },
+                    background_color: Color::rgba(0.15, 0.15, 0.15, 0.5).into(),
+                    ..default()
+                })
+                // character image
+                .with_children(|parent| {
+                    parent
+                        .spawn(ImageBundle {
+                            style: Style {
+                                size: Size::new(Val::Px(200.), Val::Auto),
+                                ..default()
+                            },
+                            image: asset_server.load("pig.png").into(),
+                            background_color: Color::rgba(1., 1., 1., 0.5).into(),
+                            ..default()
+                        })
+                        // text
+                        .with_children(|parent| {
+                            parent.spawn(TextBundle::from_section(
+                                "Pig",
+                                TextStyle {
+                                    font_size: 30.,
+                                    color: Color::WHITE,
+                                    font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+                                    ..default()
+                                },
+                            ));
+                        });
+                });
+        });
 }
