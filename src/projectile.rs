@@ -27,8 +27,8 @@ impl Plugin for ProjectilePlugin {
     fn build(&self, app: &mut App) {
         app.add_system(clean_up_offscreen_projectiles)
         .add_system(projectile_hit_player)
-        // .add_system(display_events)
-        .add_system(projectile_hit_map);
+        .add_system(projectile_collided);
+        // .add_system(projectile_hit_map);
     }
 }
 
@@ -95,13 +95,12 @@ fn projectile_hit_map(
     mut commands: Commands,
     images: Res<Assets<Image>>,
     mut projectile_query: Query<(Entity, &Transform, &Handle<Image>), With<Projectile>>,
-    mut map_query: Query<(&Transform), With<Map>>,
+    mut map_query: Query<&Transform, With<Map>>,
 ) {
     for (projectile_entity, projectile_transform, projectile_image) in
         projectile_query.iter_mut()
     {
-        for (map_transform) in map_query.iter_mut() {
-            println!("{:?}, {:?},{:?},{:?},", projectile_transform.translation, images.get(projectile_image).unwrap().size(), map_transform.translation,Vec2::new(500., 50.));
+        for map_transform in map_query.iter_mut() {
             let collision = collide(
                 projectile_transform.translation,
                 images.get(projectile_image).unwrap().size(),
@@ -116,10 +115,24 @@ fn projectile_hit_map(
     }
 }
 
-fn display_events(
+fn projectile_collided(
+    mut commands: Commands,
     mut collision_events: EventReader<CollisionEvent>,
+    mut projectile_query: Query<Entity, With<Projectile>>
 ) {
     for collision_event in collision_events.iter() {
-        println!("Received collision event: {:?}", collision_event);
+        match collision_event {
+            CollisionEvent::Started(entity1 , entity2, _) => {
+                let projectile_entity = projectile_query.iter_mut().next();
+                 if projectile_entity == Some(*entity1) {
+                     commands.entity(*entity1).despawn();
+
+                 } else if projectile_entity == Some(*entity2) {
+                    commands.entity(*entity2).despawn();
+                 }
+            },
+            _ => {}
+        }
+        // println!("Received collision event: {:?}", collision_event);
     }
 }
