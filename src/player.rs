@@ -136,6 +136,7 @@ fn setup_map(mut commands: Commands, windows: ResMut<Windows>) {
 setup_top_block(&mut commands);
 setup_bottom_block(&mut commands);
 setup_left_block(&mut commands);
+setup_right_block(&mut commands);
 create_platform(&mut commands, 200., -300., 100.);
 create_platform(&mut commands, 200., 300., 100.);
 create_platform(&mut commands, 200., 0., 200.);
@@ -144,9 +145,6 @@ create_platform(&mut commands, 200., 300., 300.);
 create_platform(&mut commands, 200., 0., 400.);
 create_platform(&mut commands, 200., -300., 500.);
 create_platform(&mut commands, 200., 300., 500.);
-// create_platform(&mut commands, 200., -300., 100.);
-// create_platform(&mut commands, 200., -300., 100.);
-// create_platform(&mut commands, 200., -300., 100.);
 }
 
 #[derive(Component)]
