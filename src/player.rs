@@ -1,5 +1,5 @@
 use bevy::{math::Vec3, prelude::*};
-use bevy_rapier2d::{na::Rotation, prelude::*};
+use bevy_rapier2d::prelude::*;
 
 use crate::gamepad::AddPlayerEvent;
 
@@ -83,7 +83,7 @@ pub struct AvailableJumps(pub u32);
 #[derive(Component)]
 pub struct Lives(u32);
 #[derive(Component)]
-pub struct DamageTaken(u32);
+pub struct DamageTaken(pub f32);
 
 #[derive(Component)]
 pub struct PlayerSpriteSheet(pub SpriteSheetBundle);
@@ -111,7 +111,7 @@ impl Default for PlayerBundle {
     fn default() -> PlayerBundle {
         PlayerBundle {
             gamepad: PlayerGamepad(Gamepad { id: 1 }),
-            damage_taken: DamageTaken(0),
+            damage_taken: DamageTaken(0.),
             available_jumps: AvailableJumps(2),
             lives: Lives(2),
             _p: Player,
@@ -140,7 +140,7 @@ fn respawn_players_who_leave_window(
                 || transform.translation.x.abs() > window.width() / 2.
             {
                 lives.0 = lives.0 - 1;
-                damage_taken.0 = 0;
+                damage_taken.0 = 0.;
 
                 if lives.0 == 0 {
                     commands.entity(player_entity).despawn();

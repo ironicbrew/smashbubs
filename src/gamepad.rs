@@ -1,14 +1,8 @@
 use bevy_rapier2d::prelude::*;
-use gilrs::ff::Effect;
-use std::time::Duration;
-use gilrs::GamepadId;
-use gilrs::Gilrs;
 use crate::player::*;
 use crate::projectile::ProjectileBundle;
 // use super::projectile::*;
 use bevy::prelude::*;
-use gilrs::ff::{BaseEffect, BaseEffectType, EffectBuilder, Replay, Ticks};
-use std::thread;
 
 
 pub const TIME_STEP: f32 = 3.;
@@ -28,7 +22,7 @@ impl Plugin for GamepadPlugin {
 }
 
 pub struct AddPlayerEvent(pub Gamepad);
-pub struct RumbleTimer(Timer);
+// pub struct RumbleTimer(Timer);
 
 fn gamepad_connections(
     mut commands: Commands,
@@ -56,9 +50,9 @@ fn gamepad_connections(
 
 fn player_movement(
     axes: Res<Axis<GamepadAxis>>,
-    mut query: Query<(&mut TextureAtlasSprite, &mut Transform, &mut Speed, &PlayerGamepad), (With<Player>)>
+    mut query: Query<(&mut TextureAtlasSprite, &mut Transform, &mut Speed, &PlayerGamepad), With<Player>>
 ) {
-    for (mut sprite, mut transform, speed, player_gamepad) in query.iter_mut() {
+    for (sprite, mut transform, speed, player_gamepad) in query.iter_mut() {
         let axis_lx = GamepadAxis {gamepad: player_gamepad.0, axis_type: GamepadAxisType::LeftStickX};
 
         let x = if let Some(x) = axes.get(axis_lx) {
@@ -70,14 +64,13 @@ fn player_movement(
         transform.translation.x += x * TIME_STEP;
 
         if x != 0. {
-            face_player_last_direction_moved(sprite, speed.0, transform);
+            face_player_last_direction_moved(sprite, speed.0);
             change_player_direction(speed, x);
         }
 
         fn face_player_last_direction_moved(
             mut player_sprite: Mut<TextureAtlasSprite>,
-            speed: f32,
-            mut transform: Mut<Transform>,
+            speed: f32
         ) {
             if speed > 0. {
                 player_sprite.flip_x = false
@@ -93,27 +86,27 @@ fn player_movement(
     }
 }
 
-pub fn rumble(gamepad_ids: &[GamepadId]) {
-    let mut gilrs = Gilrs::new().unwrap();
+// pub fn rumble(gamepad_ids: &[GamepadId]) {
+//     let mut gilrs = Gilrs::new().unwrap();
 
-    let duration = Ticks::from_ms(1000);
-    let effect = EffectBuilder::new()
-    .add_effect(BaseEffect {
-        kind: BaseEffectType::Strong { magnitude: 60_000 },
-        scheduling: Replay {
-            play_for: duration,
-            ..Default::default()
-        },
-        envelope: Default::default(),
-    })
-    .gamepads(gamepad_ids)
-    .finish(&mut gilrs)
-    .unwrap();
-    effect.play().unwrap();
-    println!("rumbling over");
-    thread::sleep(Duration::from_secs(1));
-    effect.stop().unwrap();
-}
+//     let duration = Ticks::from_ms(1000);
+//     let effect = EffectBuilder::new()
+//     .add_effect(BaseEffect {
+//         kind: BaseEffectType::Strong { magnitude: 60_000 },
+//         scheduling: Replay {
+//             play_for: duration,
+//             ..Default::default()
+//         },
+//         envelope: Default::default(),
+//     })
+//     .gamepads(gamepad_ids)
+//     .finish(&mut gilrs)
+//     .unwrap();
+//     effect.play().unwrap();
+//     println!("rumbling over");
+//     thread::sleep(Duration::from_secs(1));
+//     effect.stop().unwrap();
+// }
 
 // fn stop_rumbler(mut rumble_timer: ResMut<RumbleTimer>, time: Res<Time>, mut rumble: NonSendMut<Effect>) {
 
@@ -125,12 +118,8 @@ pub fn rumble(gamepad_ids: &[GamepadId]) {
 
 fn player_fire(
     mut commands: Commands,
-    mut gilrs: NonSendMut<Gilrs>,
-    mut rumble: NonSendMut<Effect>,
     axes: Res<Axis<GamepadAxis>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
     asset_server: Res<AssetServer>,
-    time: Res<Time>,
     buttons: Res<Input<GamepadButton>>,
     mut query: Query<(
         &mut Transform,
@@ -158,7 +147,7 @@ fn player_fire(
             //     gamepads.push(_id);
             // }
 
-            let test: Vec<GamepadId> = gilrs.gamepads().map(|(_id, _)| _id).collect();
+            // let test: Vec<GamepadId> = gilrs.gamepads().map(|(_id, _)| _id).collect();
 
             // rumble.play().unwrap();
 
