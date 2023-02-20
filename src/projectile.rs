@@ -22,26 +22,28 @@ impl Default for ProjectileBundle {
 pub struct Projectile;
 
 pub struct ProjectilePlugin;
-// impl Plugin for ProjectilePlugin {
-//     fn build(&self, app: &mut App) {
-//         app.add_system(clean_up_offscreen_projectiles.system())
-//             .add_system(projectile_hit_player.system())
-//             .add_system(projectile_hit_map.system());
-//     }
-// }
+impl Plugin for ProjectilePlugin {
+    fn build(&self, app: &mut App) {
+        app.add_system(clean_up_offscreen_projectiles);
+        // .add_system(projectile_hit_player.system())
+        // .add_system(projectile_hit_map.system());
+    }
+}
 
-// fn clean_up_offscreen_projectiles(
-//     mut commands: Commands,
-//     window: Res<WindowDescriptor>,
-//     mut query: Query<(Entity, &Transform, With<Projectile>)>,
-// ) {
-//     for (projectile_entity, transform, _) in query.iter_mut() {
-//         let translation = transform.translation;
-//         if translation.y.abs() > window.height / 2. || translation.x.abs() > window.width / 2. {
-//             commands.entity(projectile_entity).despawn();
-//         }
-//     }
-// }
+fn clean_up_offscreen_projectiles(
+    mut commands: Commands,
+    windows: Res<Windows>,
+    mut query: Query<(Entity, &Transform, With<Projectile>)>,
+) {
+    if let Some(window) = windows.iter().next() {
+        for (projectile_entity, transform, _) in query.iter_mut() {
+            let translation = transform.translation;
+            if translation.y.abs() > window.height() / 2. || translation.x.abs() > window.width() / 2. {
+                commands.entity(projectile_entity).despawn();
+            }
+        }
+    }
+}
 
 // fn projectile_hit_player(
 //     mut commands: Commands,

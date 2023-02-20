@@ -9,11 +9,15 @@ use camera::CameraPlugin;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 mod gilrs_plugin;
 use gilrs_plugin::GilrsPlugin;
+use projectile::ProjectilePlugin;
 mod projectile;
+mod music;
+use music::MusicPlugin;
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
+        .add_plugin(MusicPlugin)
         .add_plugin(WorldInspectorPlugin)
         .add_plugin(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0))
         .add_plugin(RapierDebugRenderPlugin::default())
@@ -21,5 +25,6 @@ fn main() {
         .add_plugin(CameraPlugin)
         .add_plugin(PlayerPlugin)
         .add_plugin(GamepadPlugin)
+        .add_plugin(ProjectilePlugin)
         .run();
 }
