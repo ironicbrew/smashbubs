@@ -1,19 +1,15 @@
 ##### Features
- -> remove UI element with player leaves
-- Projectiles need to disappear on collision
-- Player health no longer going down
+- Player health needs to decrease on correct player
 - Projectiles bounce once and then are destroyed
 - Characters die and respawn on death
-- UI indication of death
+- visual indication of death ()
 - Add rumble system on hit
 - Add smaller push effect on hit, shouldn't scale with health
 - Color in map blocks
 - Background color black
 - Player sprite based on player index
-- Resize map when window resizes
-- Add aiming indication
+- Add aiming direction indicator
 - Ability to pickup new guns
-- Ability to damage other players
 - Ammo for guns
 - Ability to drop current gun
 - Guns need to reload
@@ -26,12 +22,16 @@
 - Fix crash from uncalculatable error on collision
 
 ###### UI
-- Character select and ability to start game
-- Build a controls interface that displays a picture of the controls
-- Winner menu on last man standing on player death
 
 ###### Polish
 - Tidy code (structs, modules etc.)
+
+###### Pre prod considerations
+- remove UI element with player leaves
+- Winner menu on last man standing on player death
+- Build a controls interface that displays a picture of the controls
+- Character select and ability to start game
+- Resize map when window resizes
 
 ###### Ideas
 Contribute to bevy docs/examples (even just some TextureAtlas examples would be sweet)
