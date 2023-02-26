@@ -1,5 +1,8 @@
 ##### Features
  -> remove UI element with player leaves
+- Projectiles need to disappear on collision
+- Player health no longer going down
+- Projectiles bounce once and then are destroyed
 - Characters die and respawn on death
 - UI indication of death
 - Add rumble system on hit

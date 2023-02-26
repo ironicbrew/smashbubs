@@ -72,7 +72,6 @@ fn add_player(
         });
 
         for (ui_entity, ui) in ui_query.iter() {
-            println!("{:?}", ui.0);
             if ui.0 == "bottom-container" {
                 commands
                     .spawn(UIImageBundle {
@@ -217,7 +216,8 @@ pub struct PlayerBundle {
     collider: Collider,
     locked_axis: LockedAxes,
     velocity: Velocity,
-    active_collision_types: ActiveCollisionTypes,
+    active_events: ActiveEvents,
+    // active_collision_types: ActiveCollisionTypes,
     gravity_scale: GravityScale,
     health: Health,
 
@@ -243,7 +243,8 @@ impl Default for PlayerBundle {
             collider: Collider::cuboid(4., 4.),
             locked_axis: LockedAxes::ROTATION_LOCKED,
             velocity: Velocity::default(),
-            active_collision_types: ActiveCollisionTypes::default(),
+            // active_collision_types: ActiveCollisionTypes::default(),
+            active_events: ActiveEvents::COLLISION_EVENTS,
             gravity_scale: GravityScale(10.),
         }
     }

@@ -1,9 +1,8 @@
-use bevy_rapier2d::prelude::*;
 use crate::player::*;
 use crate::projectile::ProjectileBundle;
+use bevy_rapier2d::prelude::*;
 // use super::projectile::*;
 use bevy::prelude::*;
-
 
 pub const TIME_STEP: f32 = 3.;
 const BULLET_SPRITE: &str = "bullet.png";
@@ -17,7 +16,7 @@ impl Plugin for GamepadPlugin {
             .add_system(player_movement)
             .add_system(player_fire)
             .add_system(player_jump);
-            // .add_system(stop_rumbler.system());
+        // .add_system(stop_rumbler.system());
     }
 }
 
@@ -30,7 +29,11 @@ fn gamepad_connections(
     mut query: Query<(Entity, &PlayerGamepad)>,
     mut ev_add_player: EventWriter<AddPlayerEvent>,
 ) {
-    for GamepadEvent{gamepad, event_type} in gamepad_evr.iter() {
+    for GamepadEvent {
+        gamepad,
+        event_type,
+    } in gamepad_evr.iter()
+    {
         match event_type {
             GamepadEventType::Connected(_) => {
                 ev_add_player.send(AddPlayerEvent(*gamepad));
@@ -50,10 +53,21 @@ fn gamepad_connections(
 
 fn player_movement(
     axes: Res<Axis<GamepadAxis>>,
-    mut query: Query<(&mut TextureAtlasSprite, &mut Transform, &mut Speed, &PlayerGamepad), With<Player>>
+    mut query: Query<
+        (
+            &mut TextureAtlasSprite,
+            &mut Transform,
+            &mut Speed,
+            &PlayerGamepad,
+        ),
+        With<Player>,
+    >,
 ) {
     for (sprite, mut transform, speed, player_gamepad) in query.iter_mut() {
-        let axis_lx = GamepadAxis {gamepad: player_gamepad.0, axis_type: GamepadAxisType::LeftStickX};
+        let axis_lx = GamepadAxis {
+            gamepad: player_gamepad.0,
+            axis_type: GamepadAxisType::LeftStickX,
+        };
 
         let x = if let Some(x) = axes.get(axis_lx) {
             x
@@ -70,12 +84,11 @@ fn player_movement(
 
         fn face_player_last_direction_moved(
             mut player_sprite: Mut<TextureAtlasSprite>,
-            speed: f32
+            speed: f32,
         ) {
             if speed > 0. {
                 player_sprite.flip_x = false
-            } 
-            else {
+            } else {
                 player_sprite.flip_x = true
             }
         }
@@ -121,23 +134,24 @@ fn player_fire(
     axes: Res<Axis<GamepadAxis>>,
     asset_server: Res<AssetServer>,
     buttons: Res<Input<GamepadButton>>,
-    mut query: Query<(
-        &mut Transform,
-        &PlayerGamepad
-    )>,
-    audio: Res<Audio>
+    mut query: Query<(&mut Transform, &PlayerGamepad)>,
+    audio: Res<Audio>,
 ) {
-
     for (transform, gamepad) in query.iter_mut() {
+        let fire_button = GamepadButton {
+            gamepad: gamepad.0,
+            button_type: GamepadButtonType::RightTrigger2,
+        };
 
-        let fire_button = GamepadButton{gamepad: gamepad.0, button_type: GamepadButtonType::RightTrigger2};
-        
         if buttons.just_pressed(fire_button) {
-            let gunsound = asset_server.load("sounds/gun.ogg");
-            audio.play(gunsound);
-            let axis_lx = GamepadAxis{gamepad: gamepad.0, axis_type: GamepadAxisType::RightStickX};
-            let axis_ly = GamepadAxis{gamepad: gamepad.0, axis_type: GamepadAxisType::RightStickY};
-
+            let axis_lx = GamepadAxis {
+                gamepad: gamepad.0,
+                axis_type: GamepadAxisType::RightStickX,
+            };
+            let axis_ly = GamepadAxis {
+                gamepad: gamepad.0,
+                axis_type: GamepadAxisType::RightStickY,
+            };
 
             // let mut gilrs = Gilrs::new().unwrap();
 
@@ -155,7 +169,6 @@ fn player_fire(
 
             // commands.insert_resource(rumble_timer);
 
-
             //         let effect = EffectBuilder::new()
             //         .add_effect(BaseEffect {
             //             kind: BaseEffectType::Strong { magnitude: 60_000 },
@@ -170,14 +183,12 @@ fn player_fire(
             //         .unwrap();
             //         effect.play().unwrap();
 
-
-                    
-                    // thread::sleep(Duration::from_millis(100));
-                    // effect.stop().unwrap();
+            // thread::sleep(Duration::from_millis(100));
+            // effect.stop().unwrap();
 
             if let (Some(x), Some(y)) = (axes.get(axis_lx), axes.get(axis_ly)) {
                 let right_stick_pos = Vec2::new(x, y);
-                if right_stick_pos.length() > 0.1 {
+                if right_stick_pos.length() > 0.5 {
                     commands
                         .spawn(ProjectileBundle {
                             sprite: SpriteBundle {
@@ -185,8 +196,8 @@ fn player_fire(
                                 transform: Transform {
                                     scale: Vec3::new(1., 1., 1.),
                                     translation: Vec3::new(
-                                        transform.translation.x + right_stick_pos.x,
-                                        transform.translation.y + right_stick_pos.y,
+                                        transform.translation.x + (right_stick_pos.x * 20.),
+                                        transform.translation.y + (right_stick_pos.y * 20.),
                                         0.,
                                     ),
                                     ..default()
@@ -200,17 +211,10 @@ fn player_fire(
                         .insert(Friction::coefficient(0.05))
                         .insert(Restitution::coefficient(0.5))
                         .insert(AdditionalMassProperties::Mass(5.))
-                        // .insert(CollisionShape::Cuboid {
-                        //     half_extends: Vec3::new(2., 2., 1.),
-                        //     border_radius: Some(0.),
-                        // })
-                        // .insert(PhysicMaterial {
-                        //     restitution: 0.,
-                        //     density: 1., // Define the density. Higher value means heavier.
-                        //     friction: 0., // Define the friction. Higher value means higher friction.
-                        // })
                         .insert(Velocity::linear(right_stick_pos * 1000.))
                         .insert(Ccd::enabled());
+                    let gunsound = asset_server.load("sounds/gun.ogg");
+                    audio.play(gunsound);
                 }
             }
         }
@@ -219,16 +223,15 @@ fn player_fire(
 
 fn player_jump(
     buttons: Res<Input<GamepadButton>>,
-    mut query: Query<(
-        &mut AvailableJumps,
-        &mut Velocity,
-        &PlayerGamepad,
-    )>,
+    mut query: Query<(&mut AvailableJumps, &mut Velocity, &PlayerGamepad)>,
 ) {
-    for (mut available_jumps, mut velocity, gamepad,) in query.iter_mut() {
-        let jump_button = GamepadButton { gamepad: gamepad.0, button_type: GamepadButtonType::South};
+    for (mut available_jumps, mut velocity, gamepad) in query.iter_mut() {
+        let jump_button = GamepadButton {
+            gamepad: gamepad.0,
+            button_type: GamepadButtonType::South,
+        };
         if buttons.just_pressed(jump_button) && available_jumps.0 > 0 {
-            available_jumps.0 = available_jumps.0 -1;
+            available_jumps.0 = available_jumps.0 - 1;
             velocity.linvel = Vec2::Y * 400.
         }
     }
