@@ -90,7 +90,7 @@ fn add_player(
                     .with_children(|parent| {
                         // text
                         parent.spawn(TextBundle::from_section(
-                            "Pig",
+                            PlayerBundle::default().health.0.to_string(),
                             TextStyle {
                                 font_size: 30.,
                                 color: Color::WHITE,

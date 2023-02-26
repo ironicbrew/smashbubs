@@ -5,6 +5,7 @@ Added player UI with health left (needs to start with h)
 
 
 ##### Features
+- projectile collisions needs to be handled by rapier
 - Display characters + health left at bottom of menu
  -> needs to start with health of characters
  -> add UI element when player connects
