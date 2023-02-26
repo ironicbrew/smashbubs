@@ -15,8 +15,10 @@ impl Plugin for PlayerPlugin {
             .add_startup_system(setup_map)
             .add_startup_system(render_player_ui)
             .add_system(add_player)
+            .add_event::<PlayerDamageEvent>()
             .add_system(reset_jumps)
             .add_system(respawn_players_who_leave_window)
+            .add_system(update_player_ui)
             .add_event::<AddPlayerEvent>();
     }
 }
@@ -50,6 +52,8 @@ pub struct Map;
 fn add_player(
     mut commands: Commands,
     mut ev_add_player: EventReader<AddPlayerEvent>,
+    ui_query: Query<(Entity, &UIComponent)>,
+    asset_server: Res<AssetServer>,
     player_materials: Res<PlayerMaterials>,
 ) {
     for event in ev_add_player.iter() {
@@ -66,6 +70,38 @@ fn add_player(
             },
             ..default()
         });
+
+        for (ui_entity, ui) in ui_query.iter() {
+            println!("{:?}", ui.0);
+            if ui.0 == "bottom-container" {
+                commands
+                    .spawn(UIImageBundle {
+                        bundle: ImageBundle {
+                            style: Style {
+                                size: Size::new(Val::Px(200.), Val::Px(200.)),
+                                ..default()
+                            },
+                            image: asset_server.load("pig.png").into(),
+                            background_color: Color::rgba(1., 1., 1., 0.5).into(),
+                            ..default()
+                        },
+                        _ui: UIComponent(String::from("pig")),
+                    })
+                    .with_children(|parent| {
+                        // text
+                        parent.spawn(TextBundle::from_section(
+                            "Pig",
+                            TextStyle {
+                                font_size: 30.,
+                                color: Color::WHITE,
+                                font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+                                ..default()
+                            },
+                        ));
+                    })
+                    .set_parent(ui_entity);
+            }
+        }
     }
 }
 
@@ -158,6 +194,10 @@ pub struct PlayerGamepad(pub Gamepad);
 pub struct AvailableJumps(pub u32);
 #[derive(Component)]
 pub struct Lives(u32);
+
+#[derive(Component)]
+pub struct Health(pub u32);
+
 #[derive(Component)]
 pub struct DamageTaken(pub f32);
 
@@ -178,6 +218,7 @@ pub struct PlayerBundle {
     velocity: Velocity,
     active_collision_types: ActiveCollisionTypes,
     gravity_scale: GravityScale,
+    health: Health,
 
     #[bundle]
     pub sprite: SpriteSheetBundle,
@@ -192,6 +233,7 @@ impl Default for PlayerBundle {
             lives: Lives(2),
             _p: Player,
             speed: Speed(1.),
+            health: Health(100),
             sprite: SpriteSheetBundle {
                 ..Default::default()
             },
@@ -208,15 +250,24 @@ impl Default for PlayerBundle {
 fn respawn_players_who_leave_window(
     mut commands: Commands,
     windows: ResMut<Windows>,
-    mut query: Query<(Entity, &mut Transform, &mut Lives, &mut DamageTaken)>,
+    mut query: Query<(
+        Entity,
+        &mut Transform,
+        &mut Lives,
+        &mut DamageTaken,
+        &mut Health,
+    )>,
 ) {
     if let Some(window) = windows.iter().next() {
-        for (player_entity, mut transform, mut lives, mut damage_taken) in query.iter_mut() {
+        for (player_entity, mut transform, mut lives, mut damage_taken, mut health) in
+            query.iter_mut()
+        {
             if transform.translation.y.abs() > window.height() / 2.
                 || transform.translation.x.abs() > window.width() / 2.
             {
                 lives.0 = lives.0 - 1;
                 damage_taken.0 = 0.;
+                health.0 = PlayerBundle::default().health.0;
 
                 if lives.0 == 0 {
                     commands.entity(player_entity).despawn();
@@ -246,7 +297,66 @@ fn reset_jumps(
     }
 }
 
+pub struct PlayerDamageEvent(pub DamageTaken);
+
+fn update_player_ui(
+    mut commands: Commands,
+    player_query: Query<&mut Health, With<Player>>,
+    mut ui_query: Query<(&mut Text)>,
+    mut player_damage_event: EventReader<PlayerDamageEvent>,
+) {
+    for _ in player_damage_event.iter() {
+        for health in player_query.iter() {
+            for mut text in ui_query.iter_mut() {
+                text.sections[0].value = health.0.to_string();
+            }
+        }
+    }
+}
+
+#[derive(Component)]
+pub struct UIComponent(String);
+
+#[derive(Bundle)]
+struct UIImageBundle<T: Bundle> {
+    _ui: UIComponent,
+
+    #[bundle]
+    bundle: T,
+}
+
 fn render_player_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
+    // TODO: Need to only init container on start
+    // TODO: On add player need to add ui element to this
+    commands
+        // Screen
+        .spawn(NodeBundle {
+            style: Style {
+                size: Size::new(Val::Percent(100.), Val::Percent(100.)),
+                justify_content: JustifyContent::SpaceBetween,
+                align_content: AlignContent::FlexEnd,
+                ..default()
+            },
+            ..default()
+        })
+        // bottom container
+        .with_children(|parent| {
+            parent.spawn(UIImageBundle {
+                bundle: NodeBundle {
+                    style: Style {
+                        align_self: AlignSelf::FlexEnd,
+                        size: Size::new(Val::Percent(100.), Val::Px(200.)),
+                        ..default()
+                    },
+                    background_color: Color::rgba(0.15, 0.15, 0.15, 0.5).into(),
+                    ..default()
+                },
+                _ui: UIComponent(String::from("bottom-container")),
+            });
+        });
+}
+
+fn render_player_ui2(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         // Screen
         .spawn(NodeBundle {

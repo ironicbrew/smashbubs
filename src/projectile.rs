@@ -51,12 +51,13 @@ fn projectile_hit_player(
     atlases: Res<Assets<TextureAtlas>>,
     images: Res<Assets<Image>>,
     mut projectile_query: Query<(Entity, &Transform, &Handle<Image>), With<Projectile>>,
-    mut player_query: Query<(&Transform, &Handle<TextureAtlas>, &mut DamageTaken, &mut Velocity, With<Player>)>,
+    mut player_query: Query<(&Transform, &Handle<TextureAtlas>, &mut DamageTaken, &mut Health, &mut Velocity, With<Player>)>,
+    mut ev_player_damage: EventWriter<PlayerDamageEvent>
 ) {
     for (projectile_entity, projectile_transform, projectile_image) in
         projectile_query.iter_mut()
     {
-        for (player_transform, player_sprite, mut damage_taken, mut velocity, _) in player_query.iter_mut() {
+        for (player_transform, player_sprite, mut damage_taken, mut health, mut velocity, _) in player_query.iter_mut() {
             let collision = collide(
                 projectile_transform.translation,
                 images.get(projectile_image).unwrap().size(),
@@ -65,7 +66,10 @@ fn projectile_hit_player(
             );
 
             if let Some(collision) = collision {
-                damage_taken.0 = damage_taken.0 + 1.;
+                damage_taken.0 = damage_taken.0 + 10.;
+                health.0 = health.0 - 10;
+
+                ev_player_damage.send(PlayerDamageEvent(DamageTaken(damage_taken.0)));
 
                 match collision {
                     Collision::Top => {

@@ -8,6 +8,6 @@ impl Plugin for MusicPlugin {
 }
 
 fn play_music(audio: Res<Audio>, asset_server: Res<AssetServer>) {
-    let gunsound = asset_server.load("sounds/theme_music.ogg");
-    audio.play(gunsound);
+    // let gunsound = asset_server.load("sounds/theme_music.ogg");
+    // audio.play(gunsound);
 }

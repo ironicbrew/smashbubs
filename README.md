@@ -1,17 +1,25 @@
+### Added:
+Added player UI with health left (needs to start with h)
+
 ### TODO
+
 
 ##### Features
 - Display characters + health left at bottom of menu
-- Add health system (Display UI of character + health left)
+ -> needs to start with health of characters
+ -> add UI element when player connects
+ -> remove UI element with player leaves
+- Characters die and respawn on death
+- UI indication of death
 - Add rumble system on hit
+- Add smaller push effect on hit, shouldn't scale with health
 - Color in map blocks
 - Background color black
-- New player sprite based on player index
+- Player sprite based on player index
 - Resize map when window resizes
 - Add aiming indication
 - Ability to pickup new guns
 - Ability to damage other players
-- Characters die and respawn on death
 - Ammo for guns
 - Ability to drop current gun
 - Guns need to reload
@@ -24,8 +32,9 @@
 - Fix crash from uncalculatable error on collision
 
 ###### UI
-- Learn bevy ui and build a start menu with character select and ability to start game
-- Build a how to play guide
+- Character select and ability to start game
+- Build a controls interface that displays a picture of the controls
+- Winner menu on last man standing on player death
 
 ###### Polish
 - Tidy code (structs, modules etc.)
