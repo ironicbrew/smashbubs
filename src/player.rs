@@ -213,6 +213,7 @@ pub struct PlayerBundle {
     speed: Speed,
     _p: Player,
     rigid_body: RigidBody,
+    additional_mass_properties: AdditionalMassProperties,
     collider: Collider,
     locked_axis: LockedAxes,
     velocity: Velocity,
@@ -238,6 +239,7 @@ impl Default for PlayerBundle {
                 ..Default::default()
             },
             rigid_body: RigidBody::Dynamic,
+            additional_mass_properties: AdditionalMassProperties::Mass(10.),
             collider: Collider::cuboid(4., 4.),
             locked_axis: LockedAxes::ROTATION_LOCKED,
             velocity: Velocity::default(),

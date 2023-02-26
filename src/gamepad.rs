@@ -197,6 +197,9 @@ fn player_fire(
                         })
                         .insert(RigidBody::Dynamic)
                         .insert(Collider::cuboid(1., 1.))
+                        .insert(Friction::coefficient(0.05))
+                        .insert(Restitution::coefficient(0.5))
+                        .insert(AdditionalMassProperties::Mass(5.))
                         // .insert(CollisionShape::Cuboid {
                         //     half_extends: Vec3::new(2., 2., 1.),
                         //     border_radius: Some(0.),
@@ -206,7 +209,8 @@ fn player_fire(
                         //     density: 1., // Define the density. Higher value means heavier.
                         //     friction: 0., // Define the friction. Higher value means higher friction.
                         // })
-                        .insert(Velocity::linear(right_stick_pos * 1000.));
+                        .insert(Velocity::linear(right_stick_pos * 1000.))
+                        .insert(Ccd::enabled());
                 }
             }
         }
