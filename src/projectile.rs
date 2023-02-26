@@ -1,7 +1,7 @@
 use super::player::*;
 use bevy::ecs::bundle::Bundle;
-use bevy::{prelude::*, sprite::collide_aabb::*};
-use bevy_rapier2d::prelude::{Collider, CollisionEvent, ContactForceEvent, Velocity};
+use bevy::{prelude::*};
+use bevy_rapier2d::prelude::{CollisionEvent};
 
 #[derive(Bundle)]
 pub struct ProjectileBundle {
@@ -50,9 +50,8 @@ fn clean_up_offscreen_projectiles(
 fn projectile_collided(
     mut commands: Commands,
     mut collision_events: EventReader<CollisionEvent>,
-    mut projectile_query: Query<Entity, With<Projectile>>,
+    projectile_query: Query<Entity, With<Projectile>>,
     mut player_query: Query<(Entity, &mut DamageTaken, &mut Health), With<Player>>,
-
     mut ev_player_damage: EventWriter<PlayerDamageEvent>,
 ) {
     for collision_event in collision_events.iter() {

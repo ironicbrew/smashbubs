@@ -1,12 +1,4 @@
-### Added:
-Added player UI with health left (needs to start with h)
-
-### TODO
-
-
 ##### Features
-- projectile collisions needs to be handled by rapier
- -> add UI element when player connects
  -> remove UI element with player leaves
 - Characters die and respawn on death
 - UI indication of death

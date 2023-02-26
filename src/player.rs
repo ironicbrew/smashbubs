@@ -302,9 +302,8 @@ fn reset_jumps(
 pub struct PlayerDamageEvent(pub DamageTaken);
 
 fn update_player_ui(
-    mut commands: Commands,
     player_query: Query<&mut Health, With<Player>>,
-    mut ui_query: Query<(&mut Text)>,
+    mut ui_query: Query<&mut Text>,
     mut player_damage_event: EventReader<PlayerDamageEvent>,
 ) {
     for _ in player_damage_event.iter() {
@@ -327,9 +326,7 @@ struct UIImageBundle<T: Bundle> {
     bundle: T,
 }
 
-fn render_player_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
-    // TODO: Need to only init container on start
-    // TODO: On add player need to add ui element to this
+fn render_player_ui(mut commands: Commands) {
     commands
         // Screen
         .spawn(NodeBundle {
@@ -355,57 +352,5 @@ fn render_player_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
                 },
                 _ui: UIComponent(String::from("bottom-container")),
             });
-        });
-}
-
-fn render_player_ui2(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands
-        // Screen
-        .spawn(NodeBundle {
-            style: Style {
-                size: Size::new(Val::Percent(100.), Val::Percent(100.)),
-                justify_content: JustifyContent::SpaceBetween,
-                align_content: AlignContent::FlexEnd,
-                ..default()
-            },
-            ..default()
-        })
-        // bottom container
-        .with_children(|parent| {
-            parent
-                .spawn(NodeBundle {
-                    style: Style {
-                        align_self: AlignSelf::FlexEnd,
-                        size: Size::new(Val::Percent(100.), Val::Px(200.)),
-                        ..default()
-                    },
-                    background_color: Color::rgba(0.15, 0.15, 0.15, 0.5).into(),
-                    ..default()
-                })
-                // character image
-                .with_children(|parent| {
-                    parent
-                        .spawn(ImageBundle {
-                            style: Style {
-                                size: Size::new(Val::Px(200.), Val::Auto),
-                                ..default()
-                            },
-                            image: asset_server.load("pig.png").into(),
-                            background_color: Color::rgba(1., 1., 1., 0.5).into(),
-                            ..default()
-                        })
-                        // text
-                        .with_children(|parent| {
-                            parent.spawn(TextBundle::from_section(
-                                "Pig",
-                                TextStyle {
-                                    font_size: 30.,
-                                    color: Color::WHITE,
-                                    font: asset_server.load("fonts/FiraSans-Bold.ttf"),
-                                    ..default()
-                                },
-                            ));
-                        });
-                });
         });
 }
