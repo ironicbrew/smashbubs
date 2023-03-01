@@ -6,6 +6,7 @@ use bevy_rapier2d::prelude::CollisionEvent;
 #[derive(Bundle)]
 pub struct ProjectileBundle {
     pub _p: Projectile,
+    pub lives: Lives,
 
     #[bundle]
     pub sprite: SpriteBundle,
@@ -15,6 +16,7 @@ impl Default for ProjectileBundle {
     fn default() -> Self {
         ProjectileBundle {
             _p: Projectile,
+            lives: Lives(4),
             sprite: SpriteBundle::default(),
         }
     }
@@ -50,31 +52,37 @@ fn clean_up_offscreen_projectiles(
 fn projectile_collided(
     mut commands: Commands,
     mut collision_events: EventReader<CollisionEvent>,
-    projectile_query: Query<(Entity, &Projectile)>,
-    mut player_query: Query<(Entity, &mut DamageTaken, &mut Health), With<Player>>,
+    mut projectile_query: Query<(Entity, &Projectile, &mut Lives)>,
+    mut player_query: Query<(Entity, &PlayerIndex), With<Player>>,
     mut ev_player_damage: EventWriter<PlayerDamageEvent>,
 ) {
     for collision_event in collision_events.iter() {
         match collision_event {
             CollisionEvent::Started(entity1, entity2, _) => {
-
-                for (player_entity, mut damage_taken, mut health) in player_query.iter_mut() {
-                    for (projectile_entity, _p) in projectile_query.iter() {
+                for (player_entity, player_index) in
+                    player_query.iter_mut()
+                {
+                    for (projectile_entity, _p, mut lives) in projectile_query.iter_mut() {
                         if player_entity == *entity1 && projectile_entity == *entity2 {
-                            print!("hit1");
-                            damage_taken.0 = damage_taken.0 + 10.;
-                            health.0 = health.0 - 10;
-                            ev_player_damage.send(PlayerDamageEvent(DamageTaken(damage_taken.0)));
+                            ev_player_damage.send(PlayerDamageEvent(
+                                player_index.clone(),
+                                DamageTaken(10.),
+                            ));
                         } else if player_entity == *entity2 && projectile_entity == *entity1 {
-                            print!("hit1");
-                            damage_taken.0 = damage_taken.0 + 10.;
-                            health.0 = health.0 - 10;
-                            ev_player_damage.send(PlayerDamageEvent(DamageTaken(damage_taken.0)));
+                            ev_player_damage.send(PlayerDamageEvent(
+                                player_index.clone(),
+                                DamageTaken(10.),
+                            ));
                         }
-                        if projectile_entity == *entity1 {
-                            commands.entity(*entity1).despawn();
-                        } else if projectile_entity == *entity2 {
-                            commands.entity(*entity2).despawn();
+
+                        if lives.0 == 0 {
+                            if projectile_entity == *entity1 {
+                                commands.entity(*entity1).despawn();
+                            } else if projectile_entity == *entity2 {
+                                commands.entity(*entity2).despawn();
+                            }
+                        } else {
+                            lives.0 = lives.0 - 1;
                         }
                     }
                 }
