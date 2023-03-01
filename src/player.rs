@@ -104,17 +104,30 @@ fn add_player(
     }
 }
 
-fn setup_map(mut commands: Commands, windows: ResMut<Windows>) {
+fn setup_map(mut commands: Commands, windows: ResMut<Windows>, asset_server: Res<AssetServer>) {
     let window = windows.iter().next().unwrap();
 
     let setup_bottom_block = |commands: &mut Commands| {
         commands
             .spawn(Collider::cuboid(window.width(), DEFAULT_PLATFORM_THICKNESS))
-            .insert(TransformBundle::from(Transform::from_xyz(
-                0.0,
-                -(window.height() / 2.) + DEFAULT_PLATFORM_THICKNESS,
-                1.0,
-            )))
+            .insert(SpriteBundle {
+                texture: asset_server.load(PIG_SPRITE),
+                transform: Transform {
+                    scale: Vec3::new(1., 1., 1.),
+                    translation: Vec3::new(
+                        0.0,
+                        -(window.height() / 2.) + DEFAULT_PLATFORM_THICKNESS,
+                        1.0,
+                    ),
+                    ..default()
+                },
+                ..default()
+            })
+            // .insert(TransformBundle::from(Transform::from_xyz(
+            //     0.0,
+            //     -(window.height() / 2.) + DEFAULT_PLATFORM_THICKNESS,
+            //     1.0,
+            // )))
             .insert(ActiveEvents::COLLISION_EVENTS)
             .insert(Map);
     };
